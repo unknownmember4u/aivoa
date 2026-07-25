@@ -1,145 +1,226 @@
-import React from 'react';
-import { ShieldCheck, Check } from 'lucide-react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Button, Input, Checkbox, Card, Divider } from '@/components/ui';
+import { useLoginMutation } from '@/services/authApi';
+import { useAppDispatch } from '@/hooks/redux';
+import { setCredentials } from '@/store/slices/authSlice';
+
+// Zod Validation Schema
+const loginSchema = z.object({
+  email: z.string().min(1, 'Email address is required').email('Please enter a valid email address'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
 
 export const LoginPage: React.FC = () => {
-  const features = [
-    { title: "AI Processing", description: "Automated parsing and parsing validation" },
-    { title: "FDA-ready Audit Trails", description: "Inspired by 21 CFR Part 11 concepts" },
-    { title: "Grounded AI Assistant", description: "Contextual answers without hallucinations" }
-  ];
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const [login, { isLoading }] = useLoginMutation();
+  const [apiError, setApiError] = useState<string | null>(null);
 
-  const handleLoginClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    localStorage.setItem('access_token', 'mock_dev_jwt_token');
-    window.location.href = '/dashboard';
+  // Custom Zod resolver for React Hook Form
+  const zodResolver = (data: Record<string, unknown>) => {
+    const result = loginSchema.safeParse(data);
+    if (result.success) {
+      return { values: result.data, errors: {} };
+    }
+    const errors: Record<string, { type: string; message: string }> = {};
+    result.error.errors.forEach((err) => {
+      if (err.path[0]) {
+        errors[err.path[0] as string] = { type: 'validation', message: err.message };
+      }
+    });
+    return { values: {}, errors };
   };
 
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver,
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
+
+  const onSubmit = async (data: LoginFormData) => {
+    setApiError(null);
+    try {
+      const response = await login(data).unwrap();
+      const token = response.access_token;
+      
+      // Save token and dispatch to Redux store
+      dispatch(
+        setCredentials({
+          token,
+          user: {
+            id: 'user-id',
+            email: data.email,
+            role: 'QA_ANALYST',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+        })
+      );
+      
+      navigate('/dashboard');
+    } catch (err: unknown) {
+      const errorObj = err as { status?: number | string; data?: { detail?: string } };
+      if (errorObj?.status === 401) {
+        setApiError('Invalid email or password. Please verify your credentials.');
+      } else if (errorObj?.status === 422) {
+        setApiError('Validation error. Please check your inputs.');
+      } else if (errorObj?.status === 'FETCH_ERROR' || !errorObj?.status) {
+        setApiError('Network failure. Unable to connect to the authentication server.');
+      } else {
+        setApiError(errorObj?.data?.detail || 'An unexpected error occurred during authentication.');
+      }
+    }
+  };
+
+  const features = [
+    'AI Document Processing',
+    'FDA-style Audit Trails',
+    'Grounded AI Assistant',
+  ];
+
   return (
-    <div className="min-h-screen w-full flex bg-[#F8FAFC] font-sans antialiased text-[#0F172A]">
-      {/* Left Column (Branding & Feature Highlights) - Hidden on Mobile */}
-      <div className="hidden md:flex md:w-[40%] lg:w-[45%] bg-slate-950 text-white flex-col justify-between p-12 lg:p-16 border-r border-slate-800">
-        {/* Logo */}
-        <div className="flex items-center space-x-2.5">
-          <ShieldCheck className="w-8 h-8 text-blue-500" />
+    <div className="min-h-screen w-full flex bg-[#F8FAFC] font-sans antialiased text-[#0F172A] animate-fadeIn">
+      {/* LEFT BRAND PANEL (45% Desktop, 40% Tablet, Hidden Mobile) */}
+      <div className="hidden md:flex md:w-[40%] lg:w-[45%] bg-[#2563EB] text-white flex-col justify-between p-10 lg:p-14 select-none">
+        {/* Brand Header */}
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center">
+            <ShieldCheck className="w-6 h-6 text-white" />
+          </div>
           <div>
-            <span className="font-bold text-xl tracking-tight text-white block leading-none">AIVOA</span>
-            <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider block mt-1">
-              AI Complaint Management
+            <span className="font-bold text-2xl tracking-tight text-white block leading-none">AIVOA</span>
+            <span className="text-[10px] text-blue-100 font-semibold uppercase tracking-wider block mt-1">
+              Pharma Quality AI
             </span>
           </div>
         </div>
 
-        {/* Hero Copy */}
-        <div className="my-auto py-12">
-          <h1 className="text-[36px] font-bold tracking-tight leading-[1.15] text-white max-w-md mb-4">
-            AI-Powered Pharmaceutical Complaint Management System
+        {/* Brand Message */}
+        <div className="my-auto py-8">
+          <h1 className="text-3xl lg:text-[36px] font-bold tracking-tight leading-tight text-white max-w-md mb-4">
+            AI-Powered Pharmaceutical Complaint Management
           </h1>
-          <p className="text-slate-400 text-base leading-relaxed mb-10 max-w-sm">
-            Automate complaint intake, AI extraction, regulatory review, and investigation workflows.
+          <p className="text-blue-100 text-base leading-relaxed mb-8 max-w-sm">
+            Streamline complaint processing with AI-assisted extraction, review, and regulatory audit support.
           </p>
 
-          {/* Feature Bullets */}
-          <ul className="space-y-6">
+          {/* Feature List */}
+          <ul className="space-y-4">
             {features.map((feature, idx) => (
-              <li key={idx} className="flex items-start space-x-4">
-                <div className="mt-1 flex items-center justify-center w-5 h-5 rounded-full bg-blue-500/10 border border-blue-500/30">
-                  <Check className="w-3.5 h-3.5 text-blue-400" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-sm text-slate-100">{feature.title}</h3>
-                  <p className="text-xs text-slate-400 mt-0.5">{feature.description}</p>
-                </div>
+              <li key={idx} className="flex items-center space-x-3 text-sm font-medium text-white">
+                <CheckCircle2 className="w-5 h-5 text-blue-200 shrink-0" />
+                <span>{feature}</span>
               </li>
             ))}
           </ul>
         </div>
 
-        {/* Footer info */}
-        <div className="text-xs text-slate-500">
-          Validated Environment | 21 CFR Part 11 Design Concepts
+        {/* Panel Footer */}
+        <div className="flex items-center justify-between text-xs text-blue-200 border-t border-white/10 pt-4">
+          <span>Enterprise QA Portal</span>
+          <span className="font-mono bg-white/10 px-2 py-0.5 rounded text-white text-[11px]">v1.0</span>
         </div>
       </div>
 
-      {/* Right Column (Centered Login Card) */}
-      <div className="flex-1 flex flex-col justify-between p-8 bg-[#F8FAFC]">
-        {/* Empty header block to align footer to bottom */}
-        <div className="hidden md:block"></div>
+      {/* RIGHT LOGIN PANEL (55% Desktop, 60% Tablet, 100% Mobile) */}
+      <div className="flex-1 flex flex-col justify-between p-6 sm:p-10 bg-[#F8FAFC]">
+        <div className="hidden sm:block"></div>
 
-        {/* Card Container */}
-        <div className="flex justify-center items-center my-auto">
-          <div className="w-full max-w-[420px] bg-white rounded-[20px] p-8 border border-[#E2E8F0] shadow-[0_20px_50px_rgba(15,23,42,0.04)]">
-            {/* Header */}
-            <div className="mb-8">
-              {/* Mobile-only logo */}
-              <div className="flex items-center space-x-2 mb-6 md:hidden">
-                <ShieldCheck className="w-7 h-7 text-blue-600" />
-                <span className="font-bold text-lg text-slate-900">AIVOA</span>
+        {/* Centered Login Card Container */}
+        <div className="flex justify-center items-center my-auto w-full">
+          <Card className="w-full max-w-[440px] p-8 sm:p-10 bg-white border-[#E2E8F0] shadow-[0_4px_20px_-2px_rgba(15,23,42,0.05)] transition-all hover:shadow-[0_8px_30px_-4px_rgba(15,23,42,0.08)]">
+            {/* Header Logo & Titles */}
+            <div className="mb-6">
+              <div className="flex items-center space-x-2 mb-4">
+                <ShieldCheck className="w-7 h-7 text-[#2563EB]" />
+                <span className="font-bold text-xl text-[#0F172A] tracking-tight">AIVOA</span>
               </div>
-              <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Welcome Back</h2>
-              <p className="text-sm text-[#64748B] mt-1.5">Sign in to your quality management account.</p>
+              <h2 className="text-2xl font-bold text-[#0F172A] tracking-tight">Welcome Back</h2>
+              <p className="text-sm text-[#64748B] mt-1">Sign in to your quality assurance account</p>
             </div>
 
-            {/* Form Placeholder */}
-            <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  placeholder="name@company.com"
-                  defaultValue="qa.analyst@pharma.com"
-                  disabled
-                  className="w-full bg-slate-50 border border-[#E2E8F0] rounded-lg px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
-                />
-              </div>
-
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                    Password
-                  </label>
-                  <a href="#forgot" className="text-xs text-blue-600 hover:text-blue-700 font-medium">
-                    Forgot password?
-                  </a>
-                </div>
-                <input
-                  type="password"
-                  placeholder="••••••••"
-                  defaultValue="password"
-                  disabled
-                  className="w-full bg-slate-50 border border-[#E2E8F0] rounded-lg px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none"
-                />
-              </div>
-
-              <div className="flex items-center">
-                <input
-                  id="remember"
-                  type="checkbox"
-                  defaultChecked
-                  disabled
-                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <label htmlFor="remember" className="ml-2.5 text-xs text-[#64748B] select-none">
-                  Keep me signed in for 30 days
-                </label>
-              </div>
-
-              {/* Login Button */}
-              <button
-                type="submit"
-                onClick={handleLoginClick}
-                className="w-full bg-[#2563EB] hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:ring-offset-2"
+            {/* Inline Error Alert */}
+            {apiError && (
+              <div
+                role="alert"
+                className="mb-6 p-3.5 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3 text-xs text-red-800"
               >
-                Log In
-              </button>
+                <AlertCircle className="w-4 h-4 text-[#DC2626] shrink-0 mt-0.5" />
+                <span className="font-medium">{apiError}</span>
+              </div>
+            )}
+
+            {/* Login Form */}
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+              <Input
+                label="Email Address"
+                type="email"
+                placeholder="qa.analyst@pharma.com"
+                autoFocus
+                autoComplete="email"
+                error={errors.email?.message}
+                {...register('email')}
+              />
+
+              <Input
+                label="Password"
+                type="password"
+                placeholder="••••••••"
+                autoComplete="current-password"
+                error={errors.password?.message}
+                {...register('password')}
+              />
+
+              <div className="flex items-center justify-between pt-1">
+                <Checkbox id="remember-me" label="Remember me" defaultChecked />
+                <a
+                  href="#forgot"
+                  onClick={(e) => e.preventDefault()}
+                  className="text-xs font-medium text-[#2563EB] hover:underline focus:outline-none focus:ring-1 focus:ring-[#2563EB] rounded"
+                >
+                  Forgot password?
+                </a>
+              </div>
+
+              <div className="pt-2">
+                <Button
+                  type="submit"
+                  fullWidth
+                  isLoading={isLoading}
+                  disabled={isLoading}
+                  size="lg"
+                >
+                  Sign In
+                </Button>
+              </div>
             </form>
-          </div>
+
+            <Divider className="my-6" />
+
+            <p className="text-center text-xs text-[#64748B]">
+              Need access or technical support?{' '}
+              <a href="#support" onClick={(e) => e.preventDefault()} className="text-[#2563EB] font-medium hover:underline">
+                Contact Systems Admin
+              </a>
+            </p>
+          </Card>
         </div>
 
-        {/* Footer */}
-        <div className="text-center text-xs text-[#64748B] mt-8">
-          © {new Date().getFullYear()} AIVOA. All rights reserved.
+        {/* Footer Copyright */}
+        <div className="text-center text-xs text-[#64748B] mt-6">
+          © 2026 AIVOA. All rights reserved.
         </div>
       </div>
     </div>
