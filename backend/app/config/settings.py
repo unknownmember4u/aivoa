@@ -9,6 +9,11 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     API_VERSION: str = "v1"
 
+    # JWT Authentication configuration
+    SECRET_KEY: str = "super-secret-development-key-change-in-production-1234567890"
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+
     # CORS configuration
     BACKEND_CORS_ORIGINS: List[AnyHttpUrl] | List[str] = []
 
