@@ -6,6 +6,7 @@ from app.graph.types import (
     ChatContext,
     GraphMetadata,
 )
+from app.graph.complaint_workflow import build_complaint_workflow, complaint_intake_graph
 
 __all__ = [
     "ComplaintGraphState",
@@ -14,4 +15,6 @@ __all__ = [
     "ValidationResult",
     "ChatContext",
     "GraphMetadata",
+    "build_complaint_workflow",
+    "complaint_intake_graph",
 ]
