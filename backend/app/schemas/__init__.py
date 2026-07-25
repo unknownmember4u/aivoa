@@ -12,6 +12,7 @@ from app.schemas.user import (
     UserCreate,
     UserUpdate,
     UserRead,
+    LoginRequest,
     Token,
     TokenPayload,
 )
@@ -59,6 +60,7 @@ __all__ = [
     "UserCreate",
     "UserUpdate",
     "UserRead",
+    "LoginRequest",
     "Token",
     "TokenPayload",
     "ComplaintBase",
