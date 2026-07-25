@@ -104,13 +104,6 @@ async def update(db: AsyncSession, db_complaint: Complaint, update_data: dict) -
     await db.refresh(db_complaint)
     return db_complaint
 
-async def delete(db: AsyncSession, complaint: Complaint) -> None:
-    """
-    Deletes a Complaint record from PostgreSQL.
-    """
-    await db.delete(complaint)
-    await db.flush()
-
 async def create_audit_log(db: AsyncSession, audit_log: ComplaintAuditLog) -> ComplaintAuditLog:
     """
     Persists an audit log entry for a complaint event.

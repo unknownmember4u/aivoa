@@ -120,7 +120,8 @@ async def delete_complaint_endpoint(
     current_user: User = Depends(get_current_active_user),
 ):
     """
-    Deletes a complaint record and records deletion in audit log.
+    Logically closes a complaint record (sets status to CLOSED), records audit log and status history,
+    and updates updated_by_id. No physical SQL row deletion is performed. Returns HTTP 204.
     """
     await complaint_service.delete_complaint(
         db=db,

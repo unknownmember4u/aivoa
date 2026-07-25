@@ -170,7 +170,8 @@ async def delete_complaint(
     current_user: User,
 ) -> None:
     """
-    Deletes a complaint record and records deletion event in audit logs.
+    Logically closes a complaint record by setting status to CLOSED, updating updated_by_id,
+    and recording audit log and status history entries. Row remains intact in PostgreSQL.
     """
     complaint = await complaint_repository.get_by_id(db, complaint_id)
     if not complaint:
@@ -179,14 +180,38 @@ async def delete_complaint(
             detail=f"Complaint with ID {complaint_id} not found",
         )
 
-    # Log deletion audit before removal
+    old_status = complaint.status
+
+    # Record deletion audit log
     audit_log = ComplaintAuditLog(
         complaint_id=complaint_id,
         user_id=current_user.id,
-        action="DELETED",
-        changed_fields={"complaint_id": str(complaint_id)},
+        action="LOGICAL_DELETE",
+        changed_fields={
+            "status": {
+                "old": old_status.value if old_status else None,
+                "new": ComplaintStatus.CLOSED.value,
+            }
+        },
     )
     await complaint_repository.create_audit_log(db, audit_log)
 
-    await complaint_repository.delete(db, complaint)
+    # Record status history entry if status changed
+    if old_status != ComplaintStatus.CLOSED:
+        status_history = ComplaintStatusHistory(
+            complaint_id=complaint_id,
+            user_id=current_user.id,
+            from_status=old_status,
+            to_status=ComplaintStatus.CLOSED,
+            notes="Complaint logically closed via DELETE endpoint",
+        )
+        await complaint_repository.create_status_history(db, status_history)
+
+    # Perform logical close update
+    update_data = {
+        "status": ComplaintStatus.CLOSED,
+        "updated_by_id": current_user.id,
+    }
+    await complaint_repository.update(db, complaint, update_data)
     await db.commit()
+
