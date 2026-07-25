@@ -6,6 +6,7 @@ import { LoginPage } from '@/pages/LoginPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { ComplaintListPage } from '@/pages/ComplaintListPage';
 import { ComplaintDetailPage } from '@/pages/ComplaintDetailPage';
+import { ComplaintReviewPage } from '@/pages/ComplaintReviewPage';
 import { UploadPage } from '@/pages/UploadPage';
 
 export const AppRoutes: React.FC = () => {
@@ -18,6 +19,7 @@ export const AppRoutes: React.FC = () => {
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/complaints" element={<ComplaintListPage />} />
+          <Route path="/complaints/review" element={<ComplaintReviewPage />} />
           <Route path="/complaints/:id" element={<ComplaintDetailPage />} />
           <Route path="/upload" element={<UploadPage />} />
         </Route>

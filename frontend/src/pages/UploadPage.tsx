@@ -90,9 +90,9 @@ export const UploadPage: React.FC = () => {
 
       setProcessingState('COMPLETE');
 
-      // Step 3: Navigate to complaint review queue
+      // Step 3: Navigate to complaint review route
       setTimeout(() => {
-        navigate('/complaints', {
+        navigate('/complaints/review', {
           state: {
             extractedData: processResponse.extracted_data,
             documentId: docResponse.id,
