@@ -36,6 +36,7 @@ export interface Complaint {
   ai_metadata: Record<string, unknown>;
   created_by_id: string;
   updated_by_id?: string;
+  documents?: ComplaintDocument[];
   created_at: string;
   updated_at: string;
 }
