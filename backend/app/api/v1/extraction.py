@@ -11,10 +11,10 @@ from app.services import complaint_extraction_service
 router = APIRouter(tags=["Complaint AI Extraction"])
 
 @router.post(
-    "/extract/{document_id}",
+    "/process/{document_id}",
     response_model=ComplaintUploadResponse,
     status_code=status.HTTP_200_OK,
-    summary="Extract structured complaint information from an uploaded document using AI",
+    summary="Process an uploaded document through the AI complaint intake workflow",
 )
 async def extract_complaint_endpoint(
     document_id: UUID,
