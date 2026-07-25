@@ -37,8 +37,18 @@ export interface Complaint {
   created_by_id: string;
   updated_by_id?: string;
   documents?: ComplaintDocument[];
+  audit_logs?: ComplaintAuditLog[];
   created_at: string;
   updated_at: string;
+}
+
+export interface ComplaintAuditLog {
+  id: string;
+  complaint_id: string;
+  user_id: string;
+  action: string;
+  changed_fields?: Record<string, unknown>;
+  created_at: string;
 }
 
 export interface ComplaintDocument {

@@ -18,7 +18,7 @@ import {
   Spinner,
   Divider,
 } from '@/components/ui';
-import { ComplaintDocument } from '@/types';
+import { ComplaintDocument, ComplaintAuditLog } from '@/types';
 import { useGetComplaintByIdQuery } from '@/services/complaintApi';
 
 export const ComplaintDetailPage: React.FC = () => {
@@ -103,22 +103,12 @@ export const ComplaintDetailPage: React.FC = () => {
 
   const documents = complaint.documents || [];
   const missingFields = complaint.missing_fields || [];
+  const auditLogs = complaint.audit_logs || [];
 
-  // Mock Audit Timeline for 21 CFR Part 11 Compliance Visualization
-  const mockAuditLogs = [
-    {
-      action: 'SUBMITTED',
-      user: 'QA Analyst (qa.analyst@pharma.com)',
-      timestamp: complaint.created_at || new Date().toISOString(),
-      notes: 'Initial human-reviewed complaint submission.',
-    },
-    {
-      action: 'AI_EXTRACTION',
-      user: 'LangGraph Intake Pipeline',
-      timestamp: complaint.created_at || new Date().toISOString(),
-      notes: 'Automated entity parsing via Groq Gemma2-9B-IT.',
-    },
-  ];
+  const confidenceDisplay =
+    complaint.confidence_score !== undefined && complaint.confidence_score !== null
+      ? `${(complaint.confidence_score * 100).toFixed(1)}%`
+      : 'N/A';
 
   return (
     <div className="space-y-8 animate-fadeIn">
@@ -313,7 +303,7 @@ export const ComplaintDetailPage: React.FC = () => {
                   AI Confidence
                 </span>
                 <span className="text-lg font-bold text-[#2563EB] mt-0.5 block">
-                  {((complaint.confidence_score || 0.94) * 100).toFixed(1)}%
+                  {confidenceDisplay}
                 </span>
               </div>
 
@@ -347,35 +337,42 @@ export const ComplaintDetailPage: React.FC = () => {
             </div>
           </Card>
 
-          {/* SECTION 4: AUDIT TIMELINE (21 CFR Part 11 Concept) */}
+          {/* SECTION 4: AUDIT TIMELINE (Backend Dynamic Logs) */}
           <Section title="Audit Timeline" subtitle="21 CFR Part 11 compliant audit trail log">
             <Card className="p-6 border-[#E2E8F0] shadow-sm">
-              <div className="space-y-6 relative before:absolute before:inset-0 before:left-3.5 before:w-0.5 before:bg-[#E2E8F0]">
-                {mockAuditLogs.map((log, idx) => (
-                  <div key={idx} className="relative flex items-start space-x-4 pl-8">
-                    <div className="absolute left-0 top-1.5 w-7 h-7 rounded-full bg-white border-2 border-[#2563EB] flex items-center justify-center text-[#2563EB] z-10">
-                      <Clock className="w-3.5 h-3.5" />
-                    </div>
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        <span className="font-bold text-xs text-[#0F172A] tracking-wider uppercase">
-                          {log.action}
-                        </span>
-                        <span className="text-[11px] text-[#64748B]">
-                          {new Date(log.timestamp).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
+              {auditLogs.length === 0 ? (
+                <p className="text-xs text-[#64748B] text-center py-4">
+                  No audit trail entries recorded yet for this complaint.
+                </p>
+              ) : (
+                <div className="space-y-6 relative before:absolute before:inset-0 before:left-3.5 before:w-0.5 before:bg-[#E2E8F0]">
+                  {auditLogs.map((log: ComplaintAuditLog) => (
+                    <div key={log.id} className="relative flex items-start space-x-4 pl-8">
+                      <div className="absolute left-0 top-1.5 w-7 h-7 rounded-full bg-white border-2 border-[#2563EB] flex items-center justify-center text-[#2563EB] z-10">
+                        <Clock className="w-3.5 h-3.5" />
                       </div>
-                      <p className="text-xs text-[#475569] mt-0.5">{log.notes}</p>
-                      <span className="text-[11px] text-[#64748B] block mt-1">
-                        By: {log.user}
-                      </span>
+                      <div>
+                        <div className="flex items-center space-x-2">
+                          <span className="font-bold text-xs text-[#0F172A] tracking-wider uppercase">
+                            {log.action}
+                          </span>
+                          <span className="text-[11px] text-[#64748B]">
+                            {new Date(log.created_at).toLocaleString()}
+                          </span>
+                        </div>
+                        <span className="text-[11px] text-[#64748B] block mt-0.5">
+                          User ID: {log.user_id}
+                        </span>
+                        {log.changed_fields && Object.keys(log.changed_fields).length > 0 && (
+                          <div className="mt-2 text-[11px] bg-slate-50 p-2 rounded-md border border-[#E2E8F0] font-mono text-slate-700">
+                            Changed: {JSON.stringify(log.changed_fields)}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </Card>
           </Section>
         </div>
