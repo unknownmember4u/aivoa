@@ -1,7 +1,7 @@
 import uuid
 from datetime import date
 from typing import List, Optional, TYPE_CHECKING
-from sqlalchemy import String, Text, Date, Integer, Float, Enum, ForeignKey
+from sqlalchemy import String, Text, Date, Integer, Float, Enum, ForeignKey, Index
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -18,6 +18,10 @@ if TYPE_CHECKING:
 
 class Complaint(Base, TimestampMixin):
     __tablename__ = "complaints"
+    __table_args__ = (
+        Index("ix_complaints_status_severity_risk", "status", "severity", "risk_level"),
+        Index("ix_complaints_customer_product_batch", "customer_name", "product_name", "batch_number"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -26,6 +30,7 @@ class Complaint(Base, TimestampMixin):
     )
     customer_name: Mapped[str] = mapped_column(
         String(255),
+        index=True,
         nullable=False,
     )
     complaint_source: Mapped[ComplaintSource] = mapped_column(

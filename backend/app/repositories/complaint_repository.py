@@ -48,9 +48,10 @@ async def get_all(
 ) -> Tuple[List[Complaint], int]:
     """
     Fetches complaints with filtering, search, sorting, and pagination. Returns (items, total_count).
+    Uses index-only counting for maximum query throughput.
     """
     query = select(Complaint)
-    count_query = select(func.count()).select_from(Complaint)
+    count_query = select(func.count(Complaint.id))
 
     # Filtering
     if status:
