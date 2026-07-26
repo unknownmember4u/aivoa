@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -27,11 +27,25 @@ import { useGetComplaintByIdQuery } from '@/services/complaintApi';
 export const ComplaintDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const renderCountRef = useRef(0);
+  renderCountRef.current += 1;
 
-  const { data: complaint, isLoading, isError, error, refetch } = useGetComplaintByIdQuery(
+  const { data: complaint, isLoading, isFetching, isError, error, refetch } = useGetComplaintByIdQuery(
     id || '',
     { skip: !id }
   );
+
+  console.log(
+    `[DEBUG PAGE RENDER] [${new Date().toISOString()}] ComplaintDetailPage Render #${renderCountRef.current}`,
+    { complaintId: id, isLoading, isFetching, dataNotNull: complaint != null }
+  );
+
+  useEffect(() => {
+    console.log(`[DEBUG PAGE MOUNT] [${new Date().toISOString()}] ComplaintDetailPage MOUNTED for ID: ${id}`);
+    return () => {
+      console.log(`[DEBUG PAGE UNMOUNT] [${new Date().toISOString()}] ComplaintDetailPage UNMOUNTED for ID: ${id}`);
+    };
+  }, [id]);
 
   const getSeverityBadge = (sev: string) => {
     const s = sev?.toUpperCase();
@@ -65,11 +79,29 @@ export const ComplaintDetailPage: React.FC = () => {
         />
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           <div className="lg:col-span-7 space-y-6">
-            <SkeletonCard />
-            <SkeletonCard />
+            <SkeletonCard
+              debugPageName="ComplaintDetailPage"
+              debugReason="isLoading is true"
+              debugIsLoading={isLoading}
+              debugIsFetching={isFetching}
+              debugHasData={complaint != null}
+            />
+            <SkeletonCard
+              debugPageName="ComplaintDetailPage"
+              debugReason="isLoading is true"
+              debugIsLoading={isLoading}
+              debugIsFetching={isFetching}
+              debugHasData={complaint != null}
+            />
           </div>
           <div className="lg:col-span-5 space-y-6">
-            <SkeletonCard />
+            <SkeletonCard
+              debugPageName="ComplaintDetailPage"
+              debugReason="isLoading is true"
+              debugIsLoading={isLoading}
+              debugIsFetching={isFetching}
+              debugHasData={complaint != null}
+            />
           </div>
         </div>
       </div>

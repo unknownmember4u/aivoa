@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -18,12 +18,26 @@ import { useGetComplaintsQuery } from '@/services/complaintApi';
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
+  const renderCountRef = useRef(0);
+  renderCountRef.current += 1;
 
   // Fetch live complaint records from backend API
-  const { data: paginatedData, isLoading, isError, refetch } = useGetComplaintsQuery({
+  const { data: paginatedData, isLoading, isFetching, isError, refetch } = useGetComplaintsQuery({
     page: 1,
     page_size: 5,
   });
+
+  console.log(
+    `[DEBUG PAGE RENDER] [${new Date().toISOString()}] DashboardPage Render #${renderCountRef.current}`,
+    { isLoading, isFetching, dataNotNull: paginatedData != null }
+  );
+
+  useEffect(() => {
+    console.log(`[DEBUG PAGE MOUNT] [${new Date().toISOString()}] DashboardPage MOUNTED`);
+    return () => {
+      console.log(`[DEBUG PAGE UNMOUNT] [${new Date().toISOString()}] DashboardPage UNMOUNTED`);
+    };
+  }, []);
 
   const complaints = paginatedData?.items || [];
   const totalComplaints = paginatedData?.total || 0;
@@ -240,7 +254,16 @@ export const DashboardPage: React.FC = () => {
           </Button>
         }
       >
-        {isLoading && <SkeletonTable rows={5} />}
+        {isLoading && (
+          <SkeletonTable
+            rows={5}
+            debugPageName="DashboardPage"
+            debugReason="isLoading is true"
+            debugIsLoading={isLoading}
+            debugIsFetching={isFetching}
+            debugHasData={paginatedData != null}
+          />
+        )}
 
         {isError && (
           <Card className="p-6 bg-rose-50 border border-rose-200 text-rose-800 flex items-center justify-between">

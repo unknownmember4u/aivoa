@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useAppDispatch } from '@/hooks/redux';
+import { useAppDispatch, useAppSelector } from '@/hooks/redux';
 import { setUser } from '@/store/slices/authSlice';
 
 interface AuthProviderProps {
@@ -8,12 +8,19 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const dispatch = useAppDispatch();
+  const token = useAppSelector((state) => state.auth.token);
+  const currentUser = useAppSelector((state) => state.auth.user);
+
+  console.log(`[DEBUG AuthProvider MOUNT/RENDER] [${new Date().toISOString()}] token:`, token, 'currentUser:', currentUser);
 
   useEffect(() => {
-    // Restore access token and initialize state on application bootstrap
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      // Mock initial user restoration; will be populated via /auth/me RTK Query endpoint
+    console.log(`[DEBUG AuthProvider useEffect MOUNT] [${new Date().toISOString()}] Executing useEffect bootstrap`);
+    const storedToken = localStorage.getItem('access_token');
+    const storedUser = localStorage.getItem('user_profile');
+
+    console.log('[DEBUG AuthProvider localStorage]', { storedToken, storedUser });
+
+    if (storedToken && !currentUser) {
       dispatch(
         setUser({
           id: 'dev-user-id',
@@ -24,6 +31,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         })
       );
     }
+
+    return () => {
+      console.log(`[DEBUG AuthProvider UNMOUNT] [${new Date().toISOString()}] AuthProvider unmounted`);
+    };
   }, [dispatch]);
 
   return <>{children}</>;

@@ -1,8 +1,12 @@
 import email
+import logging
 import os
+import time
 from typing import Dict, Any
 from app.graph.state import ComplaintGraphState
 from app.graph.types import ProcessingStatus
+
+logger = logging.getLogger("backend_timing_audit")
 
 def parse_document_file(file_path: str) -> str:
     """
@@ -59,10 +63,13 @@ async def parse_document_node(state: ComplaintGraphState) -> Dict[str, Any]:
     """
     Node 1: Parses uploaded document file and extracts normalized raw_document_text.
     """
+    t0 = time.perf_counter()
     file_path = state.get("uploaded_file_path")
     errors = list(state.get("errors", []))
 
     if not file_path:
+        dur = round((time.perf_counter() - t0) * 1000, 3)
+        logger.info(f"[TIMING LANGGRAPH NODE parse_document] Duration: {dur}ms | FAILED: No file path")
         return {
             "processing_status": ProcessingStatus.FAILED,
             "errors": errors + ["No uploaded_file_path provided in state"],
@@ -70,11 +77,15 @@ async def parse_document_node(state: ComplaintGraphState) -> Dict[str, Any]:
 
     try:
         raw_text = parse_document_file(file_path)
+        dur = round((time.perf_counter() - t0) * 1000, 3)
+        logger.info(f"[TIMING LANGGRAPH NODE parse_document] Duration: {dur}ms | Extracted {len(raw_text)} chars")
         return {
             "raw_document_text": raw_text,
             "processing_status": ProcessingStatus.PARSING,
         }
     except Exception as e:
+        dur = round((time.perf_counter() - t0) * 1000, 3)
+        logger.error(f"[TIMING LANGGRAPH NODE parse_document FAILED] ({dur}ms): {str(e)}")
         return {
             "processing_status": ProcessingStatus.FAILED,
             "errors": errors + [f"ParseDocumentNode error: {str(e)}"],

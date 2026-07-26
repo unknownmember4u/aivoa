@@ -132,6 +132,21 @@ export const ComplaintReviewPage: React.FC = () => {
     },
   });
 
+  const renderCountRef = useRef(0);
+  renderCountRef.current += 1;
+
+  console.log(
+    `[DEBUG PAGE RENDER] [${new Date().toISOString()}] ComplaintReviewPage Render #${renderCountRef.current}`,
+    { isExtracting, isSubmitting }
+  );
+
+  useEffect(() => {
+    console.log(`[DEBUG PAGE MOUNT] [${new Date().toISOString()}] ComplaintReviewPage MOUNTED`);
+    return () => {
+      console.log(`[DEBUG PAGE UNMOUNT] [${new Date().toISOString()}] ComplaintReviewPage UNMOUNTED`);
+    };
+  }, []);
+
   // Auto scroll chat to bottom
   useEffect(() => {
     chatScrollRef.current?.scrollIntoView({ behavior: 'smooth' });

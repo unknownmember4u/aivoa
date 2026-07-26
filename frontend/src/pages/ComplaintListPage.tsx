@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search,
@@ -25,6 +25,8 @@ import { useGetComplaintsQuery } from '@/services/complaintApi';
 
 export const ComplaintListPage: React.FC = () => {
   const navigate = useNavigate();
+  const renderCountRef = useRef(0);
+  renderCountRef.current += 1;
 
   // Query state parameters
   const [page, setPage] = useState<number>(1);
@@ -53,8 +55,19 @@ export const ComplaintListPage: React.FC = () => {
     risk_level: riskLevel !== 'ALL' ? riskLevel : undefined,
   });
 
-  // Only show full skeleton table on initial cold load (when memory cache has no data)
   const isInitialLoading = isLoading && !data;
+
+  console.log(
+    `[DEBUG PAGE RENDER] [${new Date().toISOString()}] ComplaintListPage Render #${renderCountRef.current}`,
+    { isLoading, isFetching, isInitialLoading, dataNotNull: data != null }
+  );
+
+  useEffect(() => {
+    console.log(`[DEBUG PAGE MOUNT] [${new Date().toISOString()}] ComplaintListPage MOUNTED`);
+    return () => {
+      console.log(`[DEBUG PAGE UNMOUNT] [${new Date().toISOString()}] ComplaintListPage UNMOUNTED`);
+    };
+  }, []);
 
   const handleResetFilters = () => {
     setSearch('');
@@ -220,7 +233,16 @@ export const ComplaintListPage: React.FC = () => {
       )}
 
       {/* SKELETON SHIMMER LOADING STATE - ONLY ON INITIAL COLD LOAD */}
-      {isInitialLoading && <SkeletonTable rows={6} />}
+      {isInitialLoading && (
+        <SkeletonTable
+          rows={6}
+          debugPageName="ComplaintListPage"
+          debugReason="isInitialLoading (isLoading && !data) is true"
+          debugIsLoading={isLoading}
+          debugIsFetching={isFetching}
+          debugHasData={data != null}
+        />
+      )}
 
       {/* EMPTY STATE */}
       {!isInitialLoading && !isError && items.length === 0 && (

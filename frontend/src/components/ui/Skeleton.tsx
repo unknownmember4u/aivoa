@@ -33,33 +33,83 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   );
 };
 
-export const SkeletonCard: React.FC<{ className?: string }> = ({ className = '' }) => (
-  <div className={`p-6 bg-white border border-[#E2E8F0] rounded-[20px] shadow-sm space-y-4 ${className}`}>
-    <div className="flex items-center justify-between">
-      <Skeleton width="40%" height={16} />
-      <Skeleton width={60} height={24} variant="rounded" />
-    </div>
-    <Skeleton width="60%" height={32} />
-    <Skeleton width="80%" height={14} />
-  </div>
-);
+export const SkeletonCard: React.FC<{
+  className?: string;
+  debugPageName?: string;
+  debugReason?: string;
+  debugIsLoading?: boolean;
+  debugIsFetching?: boolean;
+  debugHasData?: boolean;
+}> = ({
+  className = '',
+  debugPageName = 'UnknownPage',
+  debugReason = 'Initial Load',
+  debugIsLoading,
+  debugIsFetching,
+  debugHasData,
+}) => {
+  console.log(`[DEBUG SKELETON_CARD RENDERED]`, {
+    pageName: debugPageName,
+    timestamp: new Date().toISOString(),
+    reason: debugReason,
+    isLoading: debugIsLoading,
+    isFetching: debugIsFetching,
+    dataNotNull: debugHasData,
+  });
 
-export const SkeletonTable: React.FC<{ rows?: number }> = ({ rows = 5 }) => (
-  <div className="bg-white border border-[#E2E8F0] rounded-[20px] overflow-hidden shadow-sm">
-    <div className="p-4 bg-slate-50 border-b border-[#E2E8F0] flex items-center justify-between">
-      <Skeleton width={180} height={20} />
-      <Skeleton width={120} height={32} />
+  return (
+    <div className={`p-6 bg-white border border-[#E2E8F0] rounded-[20px] shadow-sm space-y-4 ${className}`}>
+      <div className="flex items-center justify-between">
+        <Skeleton width="40%" height={16} />
+        <Skeleton width={60} height={24} variant="rounded" />
+      </div>
+      <Skeleton width="60%" height={32} />
+      <Skeleton width="80%" height={14} />
     </div>
-    <div className="divide-y divide-[#E2E8F0]">
-      {Array.from({ length: rows }).map((_, idx) => (
-        <div key={idx} className="p-4 flex items-center justify-between gap-4">
-          <Skeleton width="20%" height={16} />
-          <Skeleton width="30%" height={16} />
-          <Skeleton width="15%" height={24} variant="rounded" />
-          <Skeleton width="15%" height={24} variant="rounded" />
-          <Skeleton width="10%" height={16} />
-        </div>
-      ))}
+  );
+};
+
+export const SkeletonTable: React.FC<{
+  rows?: number;
+  debugPageName?: string;
+  debugReason?: string;
+  debugIsLoading?: boolean;
+  debugIsFetching?: boolean;
+  debugHasData?: boolean;
+}> = ({
+  rows = 5,
+  debugPageName = 'UnknownPage',
+  debugReason = 'Initial Load',
+  debugIsLoading,
+  debugIsFetching,
+  debugHasData,
+}) => {
+  console.log(`[DEBUG SKELETON_TABLE RENDERED]`, {
+    pageName: debugPageName,
+    timestamp: new Date().toISOString(),
+    reason: debugReason,
+    isLoading: debugIsLoading,
+    isFetching: debugIsFetching,
+    dataNotNull: debugHasData,
+  });
+
+  return (
+    <div className="bg-white border border-[#E2E8F0] rounded-[20px] overflow-hidden shadow-sm">
+      <div className="p-4 bg-slate-50 border-b border-[#E2E8F0] flex items-center justify-between">
+        <Skeleton width={180} height={20} />
+        <Skeleton width={120} height={32} />
+      </div>
+      <div className="divide-y divide-[#E2E8F0]">
+        {Array.from({ length: rows }).map((_, idx) => (
+          <div key={idx} className="p-4 flex items-center justify-between gap-4">
+            <Skeleton width="20%" height={16} />
+            <Skeleton width="30%" height={16} />
+            <Skeleton width="15%" height={24} variant="rounded" />
+            <Skeleton width="15%" height={24} variant="rounded" />
+            <Skeleton width="10%" height={16} />
+          </div>
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};

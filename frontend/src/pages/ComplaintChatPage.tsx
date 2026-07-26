@@ -23,12 +23,15 @@ export const ComplaintChatPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const renderCountRef = useRef(0);
+  renderCountRef.current += 1;
 
   const complaintId = id || '';
 
   const {
     data: messages = [],
     isLoading: isHistoryLoading,
+    isFetching,
     isError,
     error,
     refetch,
@@ -38,6 +41,18 @@ export const ComplaintChatPage: React.FC = () => {
 
   const [inputQuestion, setInputQuestion] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
+
+  console.log(
+    `[DEBUG PAGE RENDER] [${new Date().toISOString()}] ComplaintChatPage Render #${renderCountRef.current}`,
+    { complaintId, isHistoryLoading, isFetching, messageCount: messages.length }
+  );
+
+  useEffect(() => {
+    console.log(`[DEBUG PAGE MOUNT] [${new Date().toISOString()}] ComplaintChatPage MOUNTED for ID: ${complaintId}`);
+    return () => {
+      console.log(`[DEBUG PAGE UNMOUNT] [${new Date().toISOString()}] ComplaintChatPage UNMOUNTED for ID: ${complaintId}`);
+    };
+  }, [complaintId]);
 
   // Auto scroll to bottom when messages update
   useEffect(() => {

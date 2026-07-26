@@ -1,6 +1,7 @@
 import logging
+import time
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,17 +12,15 @@ from app.utils.logger import setup_logging
 
 # Configure structured logging
 setup_logging()
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("backend_timing_audit")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
     Startup and shutdown lifespan events.
     """
-    # Startup event
     logger.info("Application starting up...", extra={"environment": settings.ENVIRONMENT, "version": settings.APP_VERSION})
     yield
-    # Shutdown event
     logger.info("Application shutting down...")
 
 app = FastAPI(
@@ -30,6 +29,25 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     lifespan=lifespan,
 )
+
+# Custom Request Timing Audit Middleware
+@app.middleware("http")
+async def request_timing_middleware(request: Request, call_next):
+    start_time = time.perf_counter()
+    req_timestamp = time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime())
+    
+    # Process request
+    response = await call_next(request)
+    
+    end_time = time.perf_counter()
+    duration_ms = round((end_time - start_time) * 1000, 2)
+    
+    logger.info(
+        f"[BACKEND TIMING AUDIT] [{req_timestamp}] "
+        f"Method: {request.method} | Path: {request.url.path} | Status: {response.status_code} | Duration: {duration_ms}ms"
+    )
+    response.headers["X-Response-Time-Ms"] = str(duration_ms)
+    return response
 
 # Set up CORS configuration
 if settings.BACKEND_CORS_ORIGINS:

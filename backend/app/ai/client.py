@@ -1,5 +1,6 @@
 import json
 import logging
+import time
 from typing import Any, Dict, Optional
 from groq import AsyncGroq, APIConnectionError, APIError, APITimeoutError, RateLimitError
 
@@ -7,7 +8,7 @@ from app.ai.base import BaseAIService
 from app.ai.exceptions import AIRateLimitError, AIResponseError, AIServiceError, AITimeoutError
 from app.config.settings import settings
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("backend_timing_audit")
 
 class GroqClient(BaseAIService):
     """
@@ -47,7 +48,10 @@ class GroqClient(BaseAIService):
         """
         Generates a plain text response from Groq LLM.
         """
+        t0 = time.perf_counter()
         if not self.api_key or self.api_key == "your-groq-api-key-here":
+            dur = round((time.perf_counter() - t0) * 1000, 3)
+            logger.info(f"[TIMING GROQ CLIENT generate] API key unconfigured fallback: {dur}ms")
             raise AIServiceError("Groq API key unconfigured; using fast fallback.", status_code=502)
 
         messages = []
@@ -62,6 +66,8 @@ class GroqClient(BaseAIService):
                 temperature=temperature if temperature is not None else self.default_temperature,
                 max_tokens=max_tokens or self.default_max_tokens,
             )
+            dur = round((time.perf_counter() - t0) * 1000, 3)
+            logger.info(f"[TIMING GROQ CLIENT generate] Total Groq API Latency: {dur}ms")
 
             if not response.choices or not response.choices[0].message.content:
                 raise AIResponseError("Groq returned an empty text response choice.")
@@ -69,16 +75,20 @@ class GroqClient(BaseAIService):
             return response.choices[0].message.content.strip()
 
         except RateLimitError as e:
-            logger.error(f"Groq Rate Limit Exceeded: {str(e)}")
+            dur = round((time.perf_counter() - t0) * 1000, 3)
+            logger.error(f"[TIMING GROQ CLIENT generate ERROR] Rate Limit ({dur}ms): {str(e)}")
             raise AIRateLimitError(f"Groq API rate limit exceeded: {str(e)}")
         except (APITimeoutError, APIConnectionError) as e:
-            logger.error(f"Groq Connection/Timeout Error: {str(e)}")
+            dur = round((time.perf_counter() - t0) * 1000, 3)
+            logger.error(f"[TIMING GROQ CLIENT generate ERROR] Timeout/Connection ({dur}ms): {str(e)}")
             raise AITimeoutError(f"Groq API connection timed out: {str(e)}")
         except APIError as e:
-            logger.error(f"Groq API Error: {str(e)}")
+            dur = round((time.perf_counter() - t0) * 1000, 3)
+            logger.error(f"[TIMING GROQ CLIENT generate ERROR] API Error ({dur}ms): {str(e)}")
             raise AIServiceError(f"Groq API failure: {str(e)}", status_code=502)
         except Exception as e:
-            logger.error(f"Unexpected error during Groq generation: {str(e)}")
+            dur = round((time.perf_counter() - t0) * 1000, 3)
+            logger.error(f"[TIMING GROQ CLIENT generate ERROR] Unexpected ({dur}ms): {str(e)}")
             raise AIServiceError(f"Unexpected AI service error: {str(e)}")
 
     async def generate_structured(
@@ -92,7 +102,10 @@ class GroqClient(BaseAIService):
         """
         Generates a structured JSON output from Groq LLM enforcing response_format json_object.
         """
+        t0 = time.perf_counter()
         if not self.api_key or self.api_key == "your-groq-api-key-here":
+            dur = round((time.perf_counter() - t0) * 1000, 3)
+            logger.info(f"[TIMING GROQ CLIENT generate_structured] API key unconfigured fallback: {dur}ms")
             raise AIServiceError("Groq API key unconfigured; using fast fallback.", status_code=502)
 
         system_instruction = (
@@ -115,6 +128,8 @@ class GroqClient(BaseAIService):
                 max_tokens=max_tokens or self.default_max_tokens,
                 response_format={"type": "json_object"},
             )
+            dur = round((time.perf_counter() - t0) * 1000, 3)
+            logger.info(f"[TIMING GROQ CLIENT generate_structured] Total Groq API Latency: {dur}ms")
 
             if not response.choices or not response.choices[0].message.content:
                 raise AIResponseError("Groq returned an empty response for structured generation.")
