@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react';
-import { Button, Input, Checkbox, Card, Divider } from '@/components/ui';
 import { useLoginMutation } from '@/services/authApi';
 import { useAppDispatch } from '@/hooks/redux';
 import { setCredentials } from '@/store/slices/authSlice';
+import './LoginPage.css';
 
 // Zod Validation Schema
 const loginSchema = z.object({
@@ -140,82 +140,72 @@ export const LoginPage: React.FC = () => {
 
         {/* Centered Login Card Container */}
         <div className="flex justify-center items-center my-auto w-full">
-          <Card className="w-full max-w-[440px] p-8 sm:p-10 bg-white border-[#E2E8F0] shadow-[0_4px_20px_-2px_rgba(15,23,42,0.05)] transition-all hover:shadow-[0_8px_30px_-4px_rgba(15,23,42,0.08)]">
-            {/* Header Logo & Titles */}
-            <div className="mb-6">
-              <div className="flex items-center space-x-2 mb-4">
-                <ShieldCheck className="w-7 h-7 text-[#2563EB]" />
-                <span className="font-bold text-xl text-[#0F172A] tracking-tight">AIVOA</span>
-              </div>
-              <h2 className="text-2xl font-bold text-[#0F172A] tracking-tight">Welcome Back</h2>
-              <p className="text-sm text-[#64748B] mt-1">Sign in to your quality assurance account</p>
-            </div>
-
+          {/* Uiverse.io Form UI */}
+          <form className="form" onSubmit={handleSubmit(onSubmit)} noValidate>
             {/* Inline Error Alert */}
             {apiError && (
               <div
                 role="alert"
-                className="mb-6 p-3.5 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3 text-xs text-red-800"
+                className="p-3.5 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3 text-xs text-red-800"
               >
                 <AlertCircle className="w-4 h-4 text-[#DC2626] shrink-0 mt-0.5" />
                 <span className="font-medium">{apiError}</span>
               </div>
             )}
 
-            {/* Login Form */}
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-              <Input
-                label="Email Address"
-                type="email"
-                placeholder="qa.analyst@pharma.com"
-                autoFocus
+            <div className="flex-column">
+              <label>Email </label>
+            </div>
+            <div className={`inputForm ${errors.email ? 'input-error' : ''}`}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" viewBox="0 0 32 32" height="20">
+                <g data-name="Layer 3" id="Layer_3">
+                  <path d="m30.853 13.87a15 15 0 0 0 -29.729 4.082 15.1 15.1 0 0 0 12.876 12.918 15.6 15.6 0 0 0 2.016.13 14.85 14.85 0 0 0 7.715-2.145 1 1 0 1 0 -1.031-1.711 13.007 13.007 0 1 1 5.458-6.529 2.149 2.149 0 0 1 -4.158-.759v-10.856a1 1 0 0 0 -2 0v1.726a8 8 0 1 0 .2 10.325 4.135 4.135 0 0 0 7.83.274 15.2 15.2 0 0 0 .823-7.455zm-14.853 8.13a6 6 0 1 1 6-6 6.006 6.006 0 0 1 -6 6z"></path>
+                </g>
+              </svg>
+              <input
+                placeholder="Enter your Email"
+                className="input"
+                type="text"
                 autoComplete="email"
-                error={errors.email?.message}
                 {...register('email')}
               />
+            </div>
+            {errors.email && (
+              <p className="text-xs text-red-500 font-medium">{errors.email.message}</p>
+            )}
 
-              <Input
-                label="Password"
+            <div className="flex-column">
+              <label>Password </label>
+            </div>
+            <div className={`inputForm ${errors.password ? 'input-error' : ''}`}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" viewBox="-64 0 512 512" height="20">
+                <path d="m336 512h-288c-26.453125 0-48-21.523438-48-48v-224c0-26.476562 21.546875-48 48-48h288c26.453125 0 48 21.523438 48 48v224c0 26.476562-21.546875 48-48 48zm-288-288c-8.8125 0-16 7.167969-16 16v224c0 8.832031 7.1875 16 16 16h288c8.8125 0 16-7.167969 16-16v-224c0-8.832031-7.1875-16-16-16zm0 0"></path>
+                <path d="m304 224c-8.832031 0-16-7.167969-16-16v-80c0-52.929688-43.070312-96-96-96s-96 43.070312-96 96v80c0 8.832031-7.167969 16-16 16s-16-7.167969-16-16v-80c0-70.59375 57.40625-128 128-128s128 57.40625 128 128v80c0 8.832031-7.167969 16-16 16zm0 0"></path>
+              </svg>
+              <input
+                placeholder="Enter your Password"
+                className="input"
                 type="password"
-                placeholder="••••••••"
                 autoComplete="current-password"
-                error={errors.password?.message}
                 {...register('password')}
               />
+            </div>
+            {errors.password && (
+              <p className="text-xs text-red-500 font-medium">{errors.password.message}</p>
+            )}
 
-              <div className="flex items-center justify-between pt-1">
-                <Checkbox id="remember-me" label="Remember me" defaultChecked />
-                <a
-                  href="#forgot"
-                  onClick={(e) => e.preventDefault()}
-                  className="text-xs font-medium text-[#2563EB] hover:underline focus:outline-none focus:ring-1 focus:ring-[#2563EB] rounded"
-                >
-                  Forgot password?
-                </a>
-              </div>
+            <div className="flex-row-end">
+              <span className="span" onClick={(e) => e.preventDefault()}>Forgot password?</span>
+            </div>
 
-              <div className="pt-2">
-                <Button
-                  type="submit"
-                  fullWidth
-                  isLoading={isLoading}
-                  disabled={isLoading}
-                  size="lg"
-                >
-                  Sign In
-                </Button>
-              </div>
-            </form>
+            <button type="submit" className="button-submit" disabled={isLoading}>
+              {isLoading ? 'Signing In...' : 'Sign In'}
+            </button>
 
-            <Divider className="my-6" />
-
-            <p className="text-center text-xs text-[#64748B]">
-              Need access or technical support?{' '}
-              <a href="#support" onClick={(e) => e.preventDefault()} className="text-[#2563EB] font-medium hover:underline">
-                Contact Systems Admin
-              </a>
+            <p className="p">
+              Don't have an account? <span className="span">Sign Up</span>
             </p>
-          </Card>
+          </form>
         </div>
 
         {/* Footer Copyright */}
@@ -226,3 +216,4 @@ export const LoginPage: React.FC = () => {
     </div>
   );
 };
+
