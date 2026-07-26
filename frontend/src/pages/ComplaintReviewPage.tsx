@@ -85,7 +85,7 @@ export const ComplaintReviewPage: React.FC = () => {
     {
       id: 'welcome',
       sender: 'ASSISTANT',
-      text: 'Hello! I am your AI Quality Intake Assistant. Upload a document, paste complaint text, or ask questions to populate and adjust the form.',
+      text: 'Hello! I am your AI Quality Intake Assistant. Ask questions, request case summaries, or command me to alter ANY form field (e.g., "change customer to Apex Health", "set quantity to 500", "set manufacturing date to 2025-06-01").',
     },
   ]);
 
@@ -250,7 +250,7 @@ export const ComplaintReviewPage: React.FC = () => {
     setPastedText('');
   };
 
-  // Natural Language Form Command Interpreter & Chat Handler
+  // Universal AI Form Command & Task Execution Engine
   const handleSendChat = async () => {
     if (!chatInput.trim()) return;
     const userText = chatInput.trim();
@@ -263,62 +263,172 @@ export const ComplaintReviewPage: React.FC = () => {
       { id: userMsgId, sender: 'USER', text: userText },
     ]);
 
-    // Check for direct natural language form adjustment commands (e.g. "change complaint type to r / Packaging Defect")
     const lower = userText.toLowerCase();
 
-    let handledField: string | null = null;
-    let newValue: string | null = null;
+    // Universal Field Definitions covering all 13 fields
+    const fieldDefinitions = [
+      {
+        fieldName: 'Customer Name',
+        key: 'customer_name' as const,
+        keywords: ['customer name', 'customer', 'facility', 'client', 'reporter'],
+      },
+      {
+        fieldName: 'Complaint Source',
+        key: 'complaint_source' as const,
+        keywords: ['source', 'complaint source', 'channel'],
+        parseVal: (val: string) => {
+          const u = val.toUpperCase();
+          if (u.includes('PHONE') || u.includes('CALL')) return 'PHONE';
+          if (u.includes('WEB') || u.includes('PORTAL')) return 'WEB_PORTAL';
+          if (u.includes('REGULAT') || u.includes('NOTICE')) return 'REGULATORY_NOTICE';
+          return 'EMAIL';
+        },
+      },
+      {
+        fieldName: 'Product Name',
+        key: 'product_name' as const,
+        keywords: ['product name', 'product', 'drug', 'medicine'],
+      },
+      {
+        fieldName: 'Product Strength',
+        key: 'strength_grade' as const,
+        keywords: ['strength', 'product strength', 'grade', 'dosage', 'dose'],
+      },
+      {
+        fieldName: 'Batch Number',
+        key: 'batch_number' as const,
+        keywords: ['batch number', 'batch', 'lot number', 'lot'],
+      },
+      {
+        fieldName: 'Manufacturing Date',
+        key: 'manufacturing_date' as const,
+        keywords: ['manufacturing date', 'mfg date', 'manufacture date', 'mfg'],
+      },
+      {
+        fieldName: 'Expiry Date',
+        key: 'expiry_date' as const,
+        keywords: ['expiry date', 'exp date', 'expiration date', 'expiry', 'exp'],
+      },
+      {
+        fieldName: 'Quantity Affected',
+        key: 'quantity' as const,
+        keywords: ['quantity', 'qty', 'units', 'affected quantity', 'count'],
+        parseVal: (val: string) => {
+          const num = parseInt(val.replace(/[^0-9]/g, ''), 10);
+          return isNaN(num) ? 0 : num;
+        },
+      },
+      {
+        fieldName: 'Complaint Type',
+        key: 'complaint_type' as const,
+        keywords: ['complaint type', 'type', 'defect type', 'issue type', 'category'],
+      },
+      {
+        fieldName: 'Complaint Description',
+        key: 'complaint_description' as const,
+        keywords: ['complaint description', 'description', 'narrative', 'details', 'detail'],
+      },
+      {
+        fieldName: 'Complaint Date',
+        key: 'complaint_date' as const,
+        keywords: ['complaint date', 'date of complaint', 'received date', 'logged date'],
+      },
+      {
+        fieldName: 'Severity Rating',
+        key: 'severity' as const,
+        keywords: ['severity rating', 'severity', 'sev'],
+        parseVal: (val: string) => {
+          const u = val.toUpperCase();
+          if (u.includes('CRITICAL')) return 'CRITICAL';
+          if (u.includes('MINOR')) return 'MINOR';
+          return 'MAJOR';
+        },
+      },
+      {
+        fieldName: 'Priority Rating',
+        key: 'priority' as const,
+        keywords: ['priority rating', 'priority', 'prio'],
+        parseVal: (val: string) => {
+          const u = val.toUpperCase();
+          if (u.includes('HIGH')) return 'HIGH';
+          if (u.includes('LOW')) return 'LOW';
+          return 'MEDIUM';
+        },
+      },
+    ];
 
-    if (lower.includes('complaint type') || lower.includes('type to')) {
-      const match = userText.match(/(?:complaint\s+type|type)\s+(?:to|=)\s*(.+)/i);
-      newValue = match ? match[1].trim() : userText.replace(/change|set|update|complaint|type|to/gi, '').trim();
-      if (newValue) {
-        setValue('complaint_type', newValue);
-        handledField = 'Complaint Type';
+    // Check if user is issuing a form modification command
+    let updatedField: string | null = null;
+    let finalValue: any = null;
+
+    for (const fieldDef of fieldDefinitions) {
+      for (const kw of fieldDef.keywords) {
+        if (lower.includes(kw)) {
+          const regex = new RegExp(`${kw}\\s*(?:to|is|=|set to|as)\\s*(.+)`, 'i');
+          const match = userText.match(regex);
+          
+          let rawVal = '';
+          if (match && match[1]) {
+            rawVal = match[1].trim();
+          } else {
+            rawVal = userText
+              .replace(new RegExp(`^(?:change|set|update|fill|make)\\s+`, 'i'), '')
+              .replace(new RegExp(kw, 'i'), '')
+              .replace(/^(?:to|is|=|as)\s*/i, '')
+              .trim();
+          }
+
+          if (rawVal) {
+            finalValue = fieldDef.parseVal ? fieldDef.parseVal(rawVal) : rawVal;
+            setValue(fieldDef.key, finalValue);
+            updatedField = fieldDef.fieldName;
+            break;
+          }
+        }
       }
-    } else if (lower.includes('customer') || lower.includes('customer name')) {
-      const match = userText.match(/(?:customer\s+name|customer)\s+(?:to|=)\s*(.+)/i);
-      newValue = match ? match[1].trim() : userText.replace(/change|set|update|customer|name|to/gi, '').trim();
-      if (newValue) {
-        setValue('customer_name', newValue);
-        handledField = 'Customer Name';
-      }
-    } else if (lower.includes('product') || lower.includes('product name')) {
-      const match = userText.match(/(?:product\s+name|product)\s+(?:to|=)\s*(.+)/i);
-      newValue = match ? match[1].trim() : userText.replace(/change|set|update|product|name|to/gi, '').trim();
-      if (newValue) {
-        setValue('product_name', newValue);
-        handledField = 'Product Name';
-      }
-    } else if (lower.includes('batch') || lower.includes('batch number')) {
-      const match = userText.match(/(?:batch\s+number|batch)\s+(?:to|=)\s*(.+)/i);
-      newValue = match ? match[1].trim() : userText.replace(/change|set|update|batch|number|to/gi, '').trim();
-      if (newValue) {
-        setValue('batch_number', newValue);
-        handledField = 'Batch Number';
-      }
-    } else if (lower.includes('severity')) {
-      if (lower.includes('critical')) newValue = 'CRITICAL';
-      else if (lower.includes('minor')) newValue = 'MINOR';
-      else newValue = 'MAJOR';
-      setValue('severity', newValue);
-      handledField = 'Severity';
-    } else if (lower.includes('priority')) {
-      if (lower.includes('high')) newValue = 'HIGH';
-      else if (lower.includes('low')) newValue = 'LOW';
-      else newValue = 'MEDIUM';
-      setValue('priority', newValue);
-      handledField = 'Priority';
+      if (updatedField) break;
     }
 
-    if (handledField && newValue) {
+    if (updatedField && finalValue !== null) {
       setChatMessages((prev) => [
         ...prev,
         {
           id: (Date.now() + 1).toString(),
           sender: 'ASSISTANT',
-          text: `Updated form field '${handledField}' to "${newValue}".`,
+          text: `Updated '${updatedField}' to "${finalValue}".`,
           isFieldUpdate: true,
+        },
+      ]);
+      return;
+    }
+
+    // GENERAL CONVERSATIONAL AI TASKS (Clear/Reset, Summarize, Help)
+    if (lower.includes('clear') || lower.includes('reset')) {
+      handleResetForm();
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          sender: 'ASSISTANT',
+          text: 'Reset all form fields to default values.',
+          isFieldUpdate: true,
+        },
+      ]);
+      return;
+    }
+
+    if (lower.includes('summarize') || lower.includes('summary')) {
+      const desc = getValues('complaint_description') || 'No description provided yet.';
+      const prod = getValues('product_name') || 'Unspecified product';
+      const batch = getValues('batch_number') || 'Unspecified batch';
+      const summaryText = `AI Case Summary: Complaint regarding ${prod} (Batch ${batch}). Description: "${desc.slice(0, 150)}...". Recommended Action: Initiate Quality Risk Assessment & Retain Sample Inspection.`;
+      
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          sender: 'ASSISTANT',
+          text: summaryText,
         },
       ]);
       return;
@@ -346,18 +456,17 @@ export const ComplaintReviewPage: React.FC = () => {
           {
             id: (Date.now() + 2).toString(),
             sender: 'ASSISTANT',
-            text: `Based on the current form: Product '${getValues('product_name') || 'N/A'}', Batch '${getValues('batch_number') || 'N/A'}', Complaint Type '${getValues('complaint_type') || 'N/A'}'.`,
+            text: `Current Form Status: Product '${getValues('product_name') || 'N/A'}', Batch '${getValues('batch_number') || 'N/A'}', Complaint Type '${getValues('complaint_type') || 'N/A'}'. You can tell me to change any form field or summarize the case.`,
           },
         ]);
       }
     } else {
-      // General form grounded answer
       setChatMessages((prev) => [
         ...prev,
         {
           id: (Date.now() + 2).toString(),
           sender: 'ASSISTANT',
-          text: `Current form status: Product '${getValues('product_name') || 'N/A'}', Batch '${getValues('batch_number') || 'N/A'}', Complaint Type '${getValues('complaint_type') || 'N/A'}'. You can command me to change any field (e.g. "change complaint type to Packaging Defect").`,
+          text: `Current Form Status: Product '${getValues('product_name') || 'N/A'}', Batch '${getValues('batch_number') || 'N/A'}', Complaint Type '${getValues('complaint_type') || 'N/A'}', Severity '${getValues('severity')}'.\n\nYou can command me to alter ANY field (e.g. "change customer to Apex Health", "set manufacturing date to 2025-06-01", "set quantity to 500", "make severity critical").`,
         },
       ]);
     }
@@ -731,7 +840,7 @@ export const ComplaintReviewPage: React.FC = () => {
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSendChat()}
-                  placeholder='Ask AI or type "change complaint type to..."'
+                  placeholder='Command AI or ask questions...'
                   className="flex-1 h-[42px] bg-white border border-[#E5E7EB] rounded-xl px-3 text-xs text-[#111827] placeholder-[#9CA3AF] focus:outline-none focus:border-[#151717] focus:ring-1 focus:ring-[#151717]"
                 />
                 <Button
@@ -746,7 +855,7 @@ export const ComplaintReviewPage: React.FC = () => {
               </div>
 
               <p className="text-[10px] text-center text-[#6B7280]">
-                Commands example: "change complaint type to Packaging Defect"
+                Commands: "set customer to Apex", "change mfg date to 2025-06-01", "summarize case"
               </p>
             </div>
           </Card>
