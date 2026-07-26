@@ -35,18 +35,18 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     const selectId = customId || generatedId;
 
     const baseStyles =
-      'w-full bg-white border text-sm text-[#0F172A] rounded-xl transition-all duration-200 px-4 py-2.5 focus:outline-none focus:ring-2 disabled:bg-slate-50 disabled:text-[#94A3B8] disabled:cursor-not-allowed appearance-none pr-10 shadow-xs cursor-pointer';
+      'w-full h-[44px] bg-white border border-[#E5E7EB] text-sm text-[#111827] rounded-xl transition-all duration-150 px-3.5 focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 disabled:bg-slate-50 disabled:text-[#9CA3AF] disabled:cursor-not-allowed appearance-none pr-10 cursor-pointer';
 
     const borderStyles = error
       ? 'border-[#EF4444] focus:border-[#EF4444] focus:ring-[#EF4444]/20'
-      : 'border-[#E2E8F0] hover:border-[#CBD5E1] focus:border-[#2563EB] focus:ring-[#2563EB]/20';
+      : 'border-[#E5E7EB] hover:border-[#CBD5E1] focus:border-[#2563EB] focus:ring-[#2563EB]/20';
 
     return (
       <div className={`${fullWidth ? 'w-full' : ''}`}>
         {label && (
           <label
             htmlFor={selectId}
-            className="block text-xs font-semibold text-[#0F172A] uppercase tracking-wider mb-1.5"
+            className="block text-[13px] font-semibold text-[#111827] mb-1.5"
           >
             {label}
           </label>
@@ -72,7 +72,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
               </option>
             ))}
           </select>
-          <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-[#64748B]">
+          <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-[#6B7280]">
             <svg
               className="w-4 h-4 fill-current"
               viewBox="0 0 20 20"
@@ -92,7 +92,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           </p>
         )}
         {!error && helperText && (
-          <p id={`${selectId}-helper`} className="mt-1 text-xs text-[#64748B]">
+          <p id={`${selectId}-helper`} className="mt-1 text-xs text-[#6B7280]">
             {helperText}
           </p>
         )}

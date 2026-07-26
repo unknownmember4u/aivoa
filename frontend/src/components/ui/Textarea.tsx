@@ -26,18 +26,18 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     const textareaId = customId || generatedId;
 
     const baseStyles =
-      'w-full bg-white border text-sm text-[#0F172A] placeholder-[#94A3B8] rounded-xl transition-all duration-200 p-4 focus:outline-none focus:ring-2 disabled:bg-slate-50 disabled:text-[#94A3B8] disabled:cursor-not-allowed shadow-xs resize-y';
+      'w-full bg-white border border-[#E5E7EB] text-sm text-[#111827] placeholder-[#9CA3AF] rounded-xl transition-all duration-150 p-3.5 focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 disabled:bg-slate-50 disabled:text-[#9CA3AF] disabled:cursor-not-allowed resize-y';
 
     const borderStyles = error
       ? 'border-[#EF4444] focus:border-[#EF4444] focus:ring-[#EF4444]/20'
-      : 'border-[#E2E8F0] hover:border-[#CBD5E1] focus:border-[#2563EB] focus:ring-[#2563EB]/20';
+      : 'border-[#E5E7EB] hover:border-[#CBD5E1] focus:border-[#2563EB] focus:ring-[#2563EB]/20';
 
     return (
       <div className={`${fullWidth ? 'w-full' : ''}`}>
         {label && (
           <label
             htmlFor={textareaId}
-            className="block text-xs font-semibold text-[#0F172A] uppercase tracking-wider mb-1.5"
+            className="block text-[13px] font-semibold text-[#111827] mb-1.5"
           >
             {label}
           </label>
@@ -58,7 +58,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           </p>
         )}
         {!error && helperText && (
-          <p id={`${textareaId}-helper`} className="mt-1 text-xs text-[#64748B]">
+          <p id={`${textareaId}-helper`} className="mt-1 text-xs text-[#6B7280]">
             {helperText}
           </p>
         )}
