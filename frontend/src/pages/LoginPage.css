@@ -1,39 +1,42 @@
-/* From Uiverse.io by JohnnyCSilva */
+/* Translucent Glassmorphic UI Form */
 
 .form {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background-color: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background-color: rgba(255, 255, 255, 0.32);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   padding: 36px 30px;
   width: 440px;
   max-width: 100%;
-  border-radius: 20px;
+  border-radius: 24px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.45);
 }
 
 ::placeholder {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  color: #64748b;
+  color: #475569;
 }
 
 .flex-column > label {
   color: #0f172a;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 13px;
 }
 
 .inputForm {
-  border: 1.5px solid rgba(203, 213, 225, 0.7);
-  border-radius: 10px;
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+  border-radius: 12px;
   height: 50px;
   display: flex;
   align-items: center;
   padding-left: 12px;
-  background-color: rgba(255, 255, 255, 0.55);
+  background-color: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   transition: 0.2s ease-in-out;
 }
 
@@ -50,6 +53,7 @@
   background: transparent;
   font-size: 14px;
   color: #0f172a;
+  font-weight: 500;
 }
 
 .input:focus {
@@ -57,8 +61,8 @@
 }
 
 .inputForm:focus-within {
-  border: 1.5px solid #2d79f3;
-  background-color: rgba(255, 255, 255, 0.85);
+  border: 1.5px solid #151717;
+  background-color: rgba(255, 255, 255, 0.75);
 }
 
 .flex-row-end {
@@ -70,9 +74,9 @@
 }
 
 .span {
-  font-size: 14px;
-  color: #2d79f3;
-  font-weight: 500;
+  font-size: 13px;
+  color: #0f172a;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -86,16 +90,18 @@
   border: none;
   color: white;
   font-size: 15px;
-  font-weight: 500;
-  border-radius: 10px;
+  font-weight: 600;
+  border-radius: 12px;
   height: 50px;
   width: 100%;
   cursor: pointer;
-  transition: background-color 0.2s ease-in-out, opacity 0.2s ease-in-out;
+  box-shadow: 0 4px 12px rgba(21, 23, 23, 0.25);
+  transition: background-color 0.2s ease-in-out, opacity 0.2s ease-in-out, transform 0.1s ease;
 }
 
 .button-submit:hover:not(:disabled) {
   background-color: #25282a;
+  transform: translateY(-1px);
 }
 
 .button-submit:disabled {
@@ -106,6 +112,7 @@
 .p {
   text-align: center;
   color: #0f172a;
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 500;
   margin: 4px 0 0 0;
 }
