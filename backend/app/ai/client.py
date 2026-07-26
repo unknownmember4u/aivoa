@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class GroqClient(BaseAIService):
     """
     Reusable Groq LLM Client implementing BaseAIService interface.
-    Interfaces with Groq's API using gemma2-9b-it.
+    Interfaces with Groq's API using gemma2-9b-it with zero-delay timeout configurations.
     """
 
     def __init__(
@@ -30,7 +30,12 @@ class GroqClient(BaseAIService):
         if not self.api_key or self.api_key == "your-groq-api-key-here":
             logger.warning("Groq API key is not configured or using default placeholder.")
 
-        self._client = AsyncGroq(api_key=self.api_key)
+        # Set max_retries=0 and timeout=3.0s to eliminate 10-12s connection retries
+        self._client = AsyncGroq(
+            api_key=self.api_key if self.api_key and self.api_key != "your-groq-api-key-here" else "gsk_placeholder_invalid",
+            timeout=3.0,
+            max_retries=0,
+        )
 
     async def generate(
         self,
@@ -42,6 +47,9 @@ class GroqClient(BaseAIService):
         """
         Generates a plain text response from Groq LLM.
         """
+        if not self.api_key or self.api_key == "your-groq-api-key-here":
+            raise AIServiceError("Groq API key unconfigured; using fast fallback.", status_code=502)
+
         messages = []
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
@@ -84,6 +92,9 @@ class GroqClient(BaseAIService):
         """
         Generates a structured JSON output from Groq LLM enforcing response_format json_object.
         """
+        if not self.api_key or self.api_key == "your-groq-api-key-here":
+            raise AIServiceError("Groq API key unconfigured; using fast fallback.", status_code=502)
+
         system_instruction = (
             "You are a strict JSON generator. Return ONLY valid JSON adhering to the target schema. "
             "Do not wrap in markdown block code markers like ```json."
