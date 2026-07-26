@@ -3,6 +3,10 @@ import { RootState } from '@/store/store';
 
 export const baseApi = createApi({
   reducerPath: 'api',
+  keepUnusedDataFor: 300, // Cache API query data for 5 minutes in memory for instant tab switching
+  refetchOnMountOrArgChange: 30, // Skip refetch if mounted within 30 seconds
+  refetchOnFocus: false,
+  refetchOnReconnect: false,
   baseQuery: fetchBaseQuery({
     baseUrl: '/api/v1',
     prepareHeaders: (headers, { getState }) => {
