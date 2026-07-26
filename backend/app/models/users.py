@@ -43,26 +43,21 @@ class User(Base, TimestampMixin):
         "Complaint",
         foreign_keys="Complaint.created_by_id",
         back_populates="created_by",
-        lazy="selectin",
     )
     updated_complaints: Mapped[List["Complaint"]] = relationship(
         "Complaint",
         foreign_keys="Complaint.updated_by_id",
         back_populates="updated_by",
-        lazy="selectin",
     )
     audit_logs: Mapped[List["ComplaintAuditLog"]] = relationship(
         "ComplaintAuditLog",
         back_populates="user",
-        lazy="selectin",
     )
     status_changes: Mapped[List["ComplaintStatusHistory"]] = relationship(
         "ComplaintStatusHistory",
         back_populates="user",
-        lazy="selectin",
     )
     chat_messages: Mapped[List["ChatMessage"]] = relationship(
         "ChatMessage",
         back_populates="user",
-        lazy="selectin",
     )
