@@ -58,7 +58,7 @@ export const LoginPage: React.FC = () => {
       if (!token) {
         throw new Error('No access token returned from server.');
       }
-      
+
       // Save token and dispatch user profile to Redux store
       dispatch(
         setCredentials({
@@ -66,7 +66,7 @@ export const LoginPage: React.FC = () => {
           user: response.user,
         })
       );
-      
+
       navigate('/dashboard');
     } catch (err: unknown) {
       const errorObj = err as { status?: number | string; data?: { detail?: string } };
@@ -205,24 +205,18 @@ export const LoginPage: React.FC = () => {
               <p className="text-xs text-red-500 font-medium">{errors.password.message}</p>
             )}
 
-            <div className="flex-row-end">
-              <span className="span" onClick={(e) => e.preventDefault()}>Forgot password?</span>
-            </div>
+
 
             <button type="submit" className="button-submit" disabled={isLoading}>
               {isLoading ? 'Signing In...' : 'Sign In'}
             </button>
 
-            <p className="p">
-              Don't have an account? <span className="span">Sign Up</span>
-            </p>
+
           </form>
         </div>
 
-        {/* Footer Copyright */}
-        <div className="text-center text-xs text-[#0F172A] font-semibold mt-6">
-          © 2026 AIVOA. All rights reserved.
-        </div>
+
+
       </div>
     </div>
   );

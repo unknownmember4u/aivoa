@@ -14,7 +14,7 @@ ALLOWED_MIME_TYPES = [
 MAX_UPLOAD_SIZE_BYTES = 20 * 1024 * 1024  # 20 MB
 
 # AI Defaults
-DEFAULT_AI_MODEL = "gemma2-9b-it"
+DEFAULT_AI_MODEL = "llama3-8b-8192"
 
 # Pagination Defaults
 DEFAULT_PAGE_SIZE = 20

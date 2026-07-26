@@ -40,7 +40,7 @@ class Settings(BaseSettings):
 
     # AI & Model Configuration
     GROQ_API_KEY: str
-    MODEL_NAME: str = "gemma2-9b-it"
+    MODEL_NAME: str = "llama3-8b-8192"
     MAX_TOKENS: int = 2048
     TEMPERATURE: float = 0.2
 

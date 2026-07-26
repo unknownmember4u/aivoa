@@ -54,7 +54,13 @@ export const complaintApi = baseApi.injectEndpoints({
 
         return `/complaints?${queryParams.toString()}`;
       },
-      providesTags: ['Complaint'],
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.items.map(({ id }) => ({ type: 'Complaint' as const, id })),
+              { type: 'Complaint', id: 'LIST' },
+            ]
+          : [{ type: 'Complaint', id: 'LIST' }],
     }),
 
     getComplaintById: builder.query<Complaint, string>({
@@ -71,7 +77,7 @@ export const complaintApi = baseApi.injectEndpoints({
         method: 'POST',
         body: complaintData,
       }),
-      invalidatesTags: ['Complaint'],
+      invalidatesTags: [{ type: 'Complaint', id: 'LIST' }],
     }),
   }),
 });

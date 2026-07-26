@@ -25,7 +25,7 @@ export const uploadApi = baseApi.injectEndpoints({
         url: `/complaints/process/${documentId}`,
         method: 'POST',
       }),
-      invalidatesTags: ['Complaint'],
+      invalidatesTags: [{ type: 'Complaint', id: 'LIST' }],
     }),
   }),
 });

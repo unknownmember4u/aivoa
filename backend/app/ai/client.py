@@ -13,7 +13,7 @@ logger = logging.getLogger("backend_timing_audit")
 class GroqClient(BaseAIService):
     """
     Reusable Groq LLM Client implementing BaseAIService interface.
-    Interfaces with Groq's API using gemma2-9b-it with zero-delay timeout configurations.
+    Interfaces with Groq's API using llama3-8b-8192 with zero-delay timeout configurations.
     """
 
     def __init__(
