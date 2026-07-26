@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -9,6 +9,7 @@ import {
   Sparkles,
   Send,
   X,
+  CheckCircle2,
 } from 'lucide-react';
 import {
   Card,
@@ -17,6 +18,8 @@ import {
   Select,
   Button,
   Modal,
+  Avatar,
+  Spinner,
 } from '@/components/ui';
 import { useSubmitComplaintMutation } from '@/services/complaintApi';
 import { useUploadDocumentMutation, useProcessComplaintMutation } from '@/services/uploadApi';
@@ -48,17 +51,24 @@ interface NavigationState {
   riskLevel?: string;
 }
 
+interface SidePanelMessage {
+  id: string;
+  sender: 'USER' | 'ASSISTANT';
+  text: string;
+  isFieldUpdate?: boolean;
+}
+
 export const ComplaintReviewPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
   const state = (location.state as NavigationState) || {};
 
   // RTK Query hooks
   const [submitComplaint, { isLoading: isSubmitting }] = useSubmitComplaintMutation();
   const [uploadDocument] = useUploadDocumentMutation();
   const [processComplaint] = useProcessComplaintMutation();
-
   const [sendChatMessage, { isLoading: isSendingChat }] = useSendChatMessageMutation();
 
   // Local component states
@@ -69,6 +79,15 @@ export const ComplaintReviewPage: React.FC = () => {
   const [extractionProgress, setExtractionProgress] = useState<number>(0);
   const [isExtracting, setIsExtracting] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+
+  // Live AI Chat transcript messages
+  const [chatMessages, setChatMessages] = useState<SidePanelMessage[]>([
+    {
+      id: 'welcome',
+      sender: 'ASSISTANT',
+      text: 'Hello! I am your AI Quality Intake Assistant. Upload a document, paste complaint text, or ask questions to populate and adjust the form.',
+    },
+  ]);
 
   const extracted = state.extractedData || {};
 
@@ -92,6 +111,7 @@ export const ComplaintReviewPage: React.FC = () => {
     handleSubmit,
     reset,
     setValue,
+    getValues,
     formState: { errors },
   } = useForm<ReviewFormData>({
     resolver: zodResolver,
@@ -104,13 +124,18 @@ export const ComplaintReviewPage: React.FC = () => {
       manufacturing_date: extracted.manufacturing_date || '',
       expiry_date: extracted.expiry_date || '',
       quantity: extracted.quantity || 0,
-      complaint_type: extracted.complaint_type || 'Discoloration / Particle Defect',
+      complaint_type: extracted.complaint_type || 'Packaging Defect',
       complaint_description: extracted.complaint_description || '',
       complaint_date: extracted.complaint_date || new Date().toISOString().split('T')[0],
       severity: extracted.severity || 'MAJOR',
-      priority: extracted.priority || 'MEDIUM',
+      priority: extracted.priority || 'HIGH',
     },
   });
+
+  // Auto scroll chat to bottom
+  useEffect(() => {
+    chatScrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages, isExtracting, isSendingChat]);
 
   // Reset form handler
   const handleResetForm = () => {
@@ -157,16 +182,16 @@ export const ComplaintReviewPage: React.FC = () => {
   const handleFileUpload = async (file: File) => {
     setApiError(null);
     setIsExtracting(true);
-    setExtractionProgress(10);
+    setExtractionProgress(15);
 
     try {
       const formData = new FormData();
       formData.append('file', file);
       
-      setExtractionProgress(35);
+      setExtractionProgress(40);
       const docResponse = await uploadDocument(formData).unwrap();
 
-      setExtractionProgress(65);
+      setExtractionProgress(75);
       const processResponse = await processComplaint(docResponse.id).unwrap();
 
       setExtractionProgress(100);
@@ -188,9 +213,18 @@ export const ComplaintReviewPage: React.FC = () => {
         if (ext.priority) setValue('priority', String(ext.priority));
       }
 
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          sender: 'ASSISTANT',
+          text: `Document '${file.name}' processed successfully. Form fields have been populated with AI extracted metadata.`,
+        },
+      ]);
+
       setTimeout(() => {
         setIsExtracting(false);
-      }, 800);
+      }, 500);
     } catch (err: unknown) {
       setIsExtracting(false);
       const errorObj = err as { data?: { detail?: string } };
@@ -203,21 +237,129 @@ export const ComplaintReviewPage: React.FC = () => {
     if (!pastedText.trim()) return;
     setValue('complaint_description', pastedText.trim());
     setIsPasteModalOpen(false);
+
+    setChatMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        sender: 'ASSISTANT',
+        text: 'Pasted text added to Complaint Description.',
+      },
+    ]);
+
     setPastedText('');
   };
 
-  // Chat message send handler
+  // Natural Language Form Command Interpreter & Chat Handler
   const handleSendChat = async () => {
-    if (!chatInput.trim() || !state.documentId || isSendingChat) return;
-    const msg = chatInput.trim();
+    if (!chatInput.trim()) return;
+    const userText = chatInput.trim();
     setChatInput('');
-    try {
-      await sendChatMessage({
-        complaintId: state.documentId,
-        question: msg,
-      }).unwrap();
-    } catch (err) {
-      // Ignore chat error in UI
+
+    // Add user message to transcript
+    const userMsgId = Date.now().toString();
+    setChatMessages((prev) => [
+      ...prev,
+      { id: userMsgId, sender: 'USER', text: userText },
+    ]);
+
+    // Check for direct natural language form adjustment commands (e.g. "change complaint type to r / Packaging Defect")
+    const lower = userText.toLowerCase();
+
+    let handledField: string | null = null;
+    let newValue: string | null = null;
+
+    if (lower.includes('complaint type') || lower.includes('type to')) {
+      const match = userText.match(/(?:complaint\s+type|type)\s+(?:to|=)\s*(.+)/i);
+      newValue = match ? match[1].trim() : userText.replace(/change|set|update|complaint|type|to/gi, '').trim();
+      if (newValue) {
+        setValue('complaint_type', newValue);
+        handledField = 'Complaint Type';
+      }
+    } else if (lower.includes('customer') || lower.includes('customer name')) {
+      const match = userText.match(/(?:customer\s+name|customer)\s+(?:to|=)\s*(.+)/i);
+      newValue = match ? match[1].trim() : userText.replace(/change|set|update|customer|name|to/gi, '').trim();
+      if (newValue) {
+        setValue('customer_name', newValue);
+        handledField = 'Customer Name';
+      }
+    } else if (lower.includes('product') || lower.includes('product name')) {
+      const match = userText.match(/(?:product\s+name|product)\s+(?:to|=)\s*(.+)/i);
+      newValue = match ? match[1].trim() : userText.replace(/change|set|update|product|name|to/gi, '').trim();
+      if (newValue) {
+        setValue('product_name', newValue);
+        handledField = 'Product Name';
+      }
+    } else if (lower.includes('batch') || lower.includes('batch number')) {
+      const match = userText.match(/(?:batch\s+number|batch)\s+(?:to|=)\s*(.+)/i);
+      newValue = match ? match[1].trim() : userText.replace(/change|set|update|batch|number|to/gi, '').trim();
+      if (newValue) {
+        setValue('batch_number', newValue);
+        handledField = 'Batch Number';
+      }
+    } else if (lower.includes('severity')) {
+      if (lower.includes('critical')) newValue = 'CRITICAL';
+      else if (lower.includes('minor')) newValue = 'MINOR';
+      else newValue = 'MAJOR';
+      setValue('severity', newValue);
+      handledField = 'Severity';
+    } else if (lower.includes('priority')) {
+      if (lower.includes('high')) newValue = 'HIGH';
+      else if (lower.includes('low')) newValue = 'LOW';
+      else newValue = 'MEDIUM';
+      setValue('priority', newValue);
+      handledField = 'Priority';
+    }
+
+    if (handledField && newValue) {
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          sender: 'ASSISTANT',
+          text: `Updated form field '${handledField}' to "${newValue}".`,
+          isFieldUpdate: true,
+        },
+      ]);
+      return;
+    }
+
+    // Backend Grounded Q&A / AI Assistant query
+    if (state.documentId) {
+      try {
+        const chatRes = await sendChatMessage({
+          complaintId: state.documentId,
+          question: userText,
+        }).unwrap();
+
+        setChatMessages((prev) => [
+          ...prev,
+          {
+            id: (Date.now() + 2).toString(),
+            sender: 'ASSISTANT',
+            text: chatRes.answer,
+          },
+        ]);
+      } catch (err) {
+        setChatMessages((prev) => [
+          ...prev,
+          {
+            id: (Date.now() + 2).toString(),
+            sender: 'ASSISTANT',
+            text: `Based on the current form: Product '${getValues('product_name') || 'N/A'}', Batch '${getValues('batch_number') || 'N/A'}', Complaint Type '${getValues('complaint_type') || 'N/A'}'.`,
+          },
+        ]);
+      }
+    } else {
+      // General form grounded answer
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          id: (Date.now() + 2).toString(),
+          sender: 'ASSISTANT',
+          text: `Current form status: Product '${getValues('product_name') || 'N/A'}', Batch '${getValues('batch_number') || 'N/A'}', Complaint Type '${getValues('complaint_type') || 'N/A'}'. You can command me to change any field (e.g. "change complaint type to Packaging Defect").`,
+        },
+      ]);
     }
   };
 
@@ -439,7 +581,7 @@ export const ComplaintReviewPage: React.FC = () => {
                 form="complaintForm"
                 variant="primary"
                 isLoading={isSubmitting}
-                className="h-[44px] px-8 bg-[#2563EB] hover:bg-blue-700 text-white font-semibold rounded-xl shadow-xs"
+                className="h-[44px] px-8 bg-[#151717] hover:bg-[#25282a] text-white font-semibold rounded-xl shadow-xs"
               >
                 Save Complaint
               </Button>
@@ -451,18 +593,18 @@ export const ComplaintReviewPage: React.FC = () => {
         {/* RIGHT PANEL (≈35% WIDTH / 4 COLS DESKTOP) */}
         {/* ========================================================= */}
         <div className="lg:col-span-4 flex flex-col space-y-6">
-          <Card className="p-6 bg-white border border-[#E5E7EB] rounded-[20px] shadow-sm flex-1 flex flex-col justify-between space-y-6">
-            <div className="space-y-6">
+          <Card className="p-6 bg-white border border-[#E5E7EB] rounded-[20px] shadow-sm flex-1 flex flex-col justify-between space-y-6 min-h-[580px]">
+            <div className="space-y-4 flex-1 flex flex-col">
               {/* HEADER WITH BETA BADGE */}
-              <div className="flex items-center justify-between pb-4 border-b border-[#E5E7EB]">
+              <div className="flex items-center justify-between pb-4 border-b border-[#E5E7EB] shrink-0">
                 <div className="flex items-center space-x-2">
-                  <Sparkles className="w-5 h-5 text-[#2563EB]" />
+                  <Sparkles className="w-5 h-5 text-[#151717]" />
                   <h3 className="font-bold text-base text-[#111827]">
                     AI Complaint Intake Assistant
                   </h3>
                 </div>
-                <span className="bg-blue-50 text-[#2563EB] border border-blue-200 px-2.5 py-0.5 text-xs font-semibold rounded-full">
-                  BETA
+                <span className="bg-slate-100 text-[#151717] border border-slate-200 px-2.5 py-0.5 text-xs font-semibold rounded-full">
+                  LIVE
                 </span>
               </div>
 
@@ -481,10 +623,10 @@ export const ComplaintReviewPage: React.FC = () => {
                   }
                 }}
                 onClick={() => fileInputRef.current?.click()}
-                className={`border-2 border-dashed rounded-2xl p-6 text-center transition-all cursor-pointer select-none ${
+                className={`border-2 border-dashed rounded-2xl p-4 text-center transition-all cursor-pointer select-none shrink-0 ${
                   dragOver
-                    ? 'border-[#2563EB] bg-blue-50/50'
-                    : 'border-[#E5E7EB] hover:border-[#2563EB] bg-slate-50/50'
+                    ? 'border-[#151717] bg-slate-100'
+                    : 'border-[#E5E7EB] hover:border-[#151717] bg-slate-50/50'
                 }`}
               >
                 <input
@@ -499,111 +641,112 @@ export const ComplaintReviewPage: React.FC = () => {
                   }}
                 />
 
-                <div className="w-12 h-12 rounded-full bg-blue-50 text-[#2563EB] flex items-center justify-center mx-auto mb-3">
-                  <UploadCloud className="w-6 h-6" />
+                <div className="w-10 h-10 rounded-full bg-slate-100 text-[#151717] flex items-center justify-center mx-auto mb-2">
+                  <UploadCloud className="w-5 h-5" />
                 </div>
 
-                <p className="text-sm font-semibold text-[#111827]">
+                <p className="text-xs font-semibold text-[#111827]">
                   Drag & drop complaint document here
                 </p>
-                <p className="text-xs text-[#6B7280] mt-1 font-medium">or click to browse</p>
+                <p className="text-[11px] text-[#6B7280] mt-0.5 font-medium">or click to browse PDF, DOCX, TXT</p>
               </div>
 
-              {/* CENTERED OR DIVIDER */}
-              <div className="relative text-center my-2">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-[#E5E7EB]" />
-                </div>
-                <span className="relative text-xs font-semibold text-[#9CA3AF] bg-white px-3 uppercase tracking-wider">
-                  OR
-                </span>
-              </div>
-
-              {/* LARGE OUTLINED PASTE BUTTON */}
+              {/* PASTE BUTTON */}
               <Button
                 variant="outline"
                 fullWidth
+                size="sm"
                 onClick={() => setIsPasteModalOpen(true)}
-                className="h-[44px] rounded-xl border-[#E5E7EB] text-[#111827] font-semibold flex items-center justify-center space-x-2 hover:bg-slate-50"
+                className="h-[38px] rounded-xl border-[#E5E7EB] text-[#111827] font-semibold flex items-center justify-center space-x-2 hover:bg-slate-50 shrink-0"
                 leftIcon={<FileText className="w-4 h-4 text-[#6B7280]" />}
               >
                 <span>Paste Complaint Text / Email</span>
               </Button>
 
-              {/* GREEN SUPPORTED FORMATS CARD */}
-              <div className="p-3.5 bg-emerald-50/70 border border-emerald-200 rounded-xl text-xs text-emerald-950 space-y-2">
-                <span className="font-semibold block text-emerald-900">Supported formats:</span>
-                <div className="flex items-center space-x-2">
-                  <span className="bg-white border border-emerald-200 px-2 py-0.5 rounded font-mono font-semibold text-[11px]">
-                    PDF
-                  </span>
-                  <span className="bg-white border border-emerald-200 px-2 py-0.5 rounded font-mono font-semibold text-[11px]">
-                    DOCX
-                  </span>
-                  <span className="bg-white border border-emerald-200 px-2 py-0.5 rounded font-mono font-semibold text-[11px]">
-                    TXT
-                  </span>
-                  <span className="bg-white border border-emerald-200 px-2 py-0.5 rounded font-mono font-semibold text-[11px]">
-                    EML
-                  </span>
+              {/* EXTRACTION PROGRESS BAR (WHEN EXTRACTING) */}
+              {isExtracting && (
+                <div className="space-y-1.5 p-3 bg-slate-50 border border-slate-200 rounded-xl shrink-0">
+                  <div className="flex items-center justify-between text-xs font-semibold">
+                    <span className="text-[#111827]">Analyzing Document...</span>
+                    <span className="text-[#151717] font-mono font-bold">{extractionProgress}%</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[#151717] transition-all duration-300 rounded-full"
+                      style={{ width: `${extractionProgress}%` }}
+                    />
+                  </div>
                 </div>
-                <p className="text-[11px] text-emerald-800 pt-0.5">Maximum file size: 20 MB</p>
-              </div>
+              )}
 
-              {/* EXTRACTION PROGRESS SECTION */}
-              <div className="space-y-2 pt-1">
-                <div className="flex items-center justify-between text-xs font-semibold">
-                  <span className="text-[#111827]">Extraction Progress</span>
-                  <span className="text-[#2563EB] font-mono font-bold">
-                    {isExtracting ? `${extractionProgress}%` : '10%'}
-                  </span>
-                </div>
+              {/* SCROLLABLE LIVE CHAT TRANSCRIPT AREA */}
+              <div className="flex-1 overflow-y-auto max-h-[300px] space-y-3 pr-1 pt-2">
+                {chatMessages.map((msg) => {
+                  const isUser = msg.sender === 'USER';
+                  return (
+                    <div
+                      key={msg.id}
+                      className={`flex items-start gap-2 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
+                    >
+                      <Avatar name={isUser ? 'You' : 'AI'} size="sm" />
+                      <div
+                        className={`p-3 rounded-2xl text-xs leading-relaxed max-w-[85%] ${
+                          isUser
+                            ? 'bg-[#151717] text-white rounded-tr-none font-medium'
+                            : msg.isFieldUpdate
+                            ? 'bg-emerald-50 text-emerald-950 border border-emerald-200 rounded-tl-none font-medium'
+                            : 'bg-slate-100 text-[#111827] border border-[#E5E7EB] rounded-tl-none'
+                        }`}
+                      >
+                        {msg.isFieldUpdate && (
+                          <span className="flex items-center gap-1 font-bold text-emerald-800 mb-1 text-[11px]">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                            Form Field Updated
+                          </span>
+                        )}
+                        <p className="whitespace-pre-wrap">{msg.text}</p>
+                      </div>
+                    </div>
+                  );
+                })}
 
-                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-[#2563EB] transition-all duration-300 rounded-full"
-                    style={{ width: isExtracting ? `${extractionProgress}%` : '10%' }}
-                  />
-                </div>
-
-                <p className="text-xs text-[#6B7280] leading-relaxed pt-1">
-                  Analyzing document content and extracting key details... Please wait. This may take a few moments.
-                </p>
-              </div>
-
-              {/* LIGHT BLUE AI HELPER CARD */}
-              <div className="p-3.5 bg-blue-50/70 border border-blue-200 rounded-xl text-xs text-blue-950 flex items-start space-x-3">
-                <Sparkles className="w-5 h-5 text-[#2563EB] shrink-0 mt-0.5" />
-                <p className="leading-relaxed">
-                  Upload a complaint document or paste text above. AI will automatically extract the details and populate the form for you.
-                </p>
+                {isSendingChat && (
+                  <div className="flex items-start gap-2 flex-row">
+                    <Avatar name="AI" size="sm" />
+                    <div className="p-3 rounded-2xl bg-slate-100 border border-[#E5E7EB] text-xs text-[#64748B] flex items-center space-x-2 rounded-tl-none">
+                      <Spinner size="sm" className="text-[#151717]" />
+                      <span>Processing command...</span>
+                    </div>
+                  </div>
+                )}
+                <div ref={chatScrollRef} />
               </div>
             </div>
 
-            {/* STICKY BOTTOM CHAT SECTION */}
-            <div className="pt-4 border-t border-[#E5E7EB] space-y-3">
+            {/* STICKY BOTTOM CHAT COMPOSER */}
+            <div className="pt-3 border-t border-[#E5E7EB] space-y-2 shrink-0">
               <div className="flex items-center space-x-2">
                 <input
                   type="text"
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSendChat()}
-                  placeholder="Ask me anything about this complaint..."
-                  className="flex-1 h-[44px] bg-white border border-[#E5E7EB] rounded-xl px-3.5 text-sm text-[#111827] placeholder-[#9CA3AF] focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20"
+                  placeholder='Ask AI or type "change complaint type to..."'
+                  className="flex-1 h-[42px] bg-white border border-[#E5E7EB] rounded-xl px-3 text-xs text-[#111827] placeholder-[#9CA3AF] focus:outline-none focus:border-[#151717] focus:ring-1 focus:ring-[#151717]"
                 />
                 <Button
                   variant="primary"
                   onClick={handleSendChat}
                   isLoading={isSendingChat}
                   disabled={!chatInput.trim() || isSendingChat}
-                  className="h-[44px] px-3.5 bg-[#2563EB] text-white rounded-xl shrink-0"
+                  className="h-[42px] px-3.5 bg-[#151717] hover:bg-[#25282a] text-white rounded-xl shrink-0"
                 >
                   <Send className="w-4 h-4" />
                 </Button>
               </div>
 
-              <p className="text-[11px] text-center text-[#6B7280]">
-                AI responses may contain errors. Please verify information.
+              <p className="text-[10px] text-center text-[#6B7280]">
+                Commands example: "change complaint type to Packaging Defect"
               </p>
             </div>
           </Card>
