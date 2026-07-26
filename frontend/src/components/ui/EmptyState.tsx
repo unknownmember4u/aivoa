@@ -1,31 +1,37 @@
 import React from 'react';
-import { Inbox } from 'lucide-react';
 
 export interface EmptyStateProps {
+  icon: React.ReactNode;
   title: string;
   description: string;
-  icon?: React.ReactNode;
   action?: React.ReactNode;
+  secondaryAction?: React.ReactNode;
   className?: string;
 }
 
 export const EmptyState: React.FC<EmptyStateProps> = ({
+  icon,
   title,
   description,
-  icon,
   action,
+  secondaryAction,
   className = '',
 }) => {
   return (
-    <div
-      className={`bg-white rounded-[16px] border border-dashed border-[#E2E8F0] p-12 text-center flex flex-col items-center justify-center ${className}`}
-    >
-      <div className="w-12 h-12 rounded-full bg-slate-100 text-[#64748B] flex items-center justify-center mb-4">
-        {icon || <Inbox className="w-6 h-6" />}
+    <div className={`p-12 sm:p-16 bg-white border border-[#E2E8F0] rounded-[24px] shadow-sm text-center flex flex-col items-center justify-center space-y-4 max-w-lg mx-auto ${className}`}>
+      <div className="w-14 h-14 rounded-2xl bg-blue-50/80 border border-blue-100 text-[#2563EB] flex items-center justify-center shadow-xs">
+        {icon}
       </div>
-      <h3 className="text-lg font-bold text-[#0F172A] tracking-tight mb-1">{title}</h3>
-      <p className="text-sm text-[#64748B] max-w-sm mb-6">{description}</p>
-      {action && <div>{action}</div>}
+      <div>
+        <h3 className="text-lg font-bold text-[#0F172A] tracking-tight">{title}</h3>
+        <p className="text-xs text-[#64748B] mt-1.5 leading-relaxed max-w-sm mx-auto">{description}</p>
+      </div>
+      {(action || secondaryAction) && (
+        <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+          {action}
+          {secondaryAction}
+        </div>
+      )}
     </div>
   );
 };

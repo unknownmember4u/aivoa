@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
   Upload,
   Plus,
@@ -10,49 +11,111 @@ import {
   Sparkles,
   Eye,
   ArrowRight,
+  TrendingUp,
+  TrendingDown,
 } from 'lucide-react';
 import { PageHeader, Section, Card, Badge, Button } from '@/components/ui';
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
 
-  // Placeholder KPI Cards Data
+  // Premium KPI Cards Data with Mini Sparklines
   const kpiData = [
     {
       title: 'Total Complaints',
       value: '1,284',
-      description: 'All recorded system cases',
+      trend: '+12.4%',
+      trendUp: true,
+      comparison: 'vs. last month',
       badgeText: 'All Time',
       badgeVariant: 'info' as const,
       icon: Activity,
-      iconColor: 'text-blue-600 bg-blue-50',
+      iconBg: 'bg-blue-50 text-[#2563EB]',
+      sparkline: (
+        <svg className="w-20 h-8 stroke-blue-500 fill-blue-500/10" viewBox="0 0 100 30">
+          <path
+            d="M0,25 Q15,18 30,22 T60,10 T90,15 T100,5 L100,30 L0,30 Z"
+            strokeWidth="0"
+          />
+          <path
+            d="M0,25 Q15,18 30,22 T60,10 T90,15 T100,5"
+            fill="none"
+            strokeWidth="2"
+          />
+        </svg>
+      ),
     },
     {
       title: 'Open Complaints',
       value: '86',
-      description: 'Pending QA investigation',
-      badgeText: '+4 today',
+      trend: '+4 today',
+      trendUp: true,
+      comparison: 'pending QA triage',
+      badgeText: 'Active',
       badgeVariant: 'warning' as const,
       icon: FileText,
-      iconColor: 'text-amber-600 bg-amber-50',
+      iconBg: 'bg-amber-50 text-[#D97706]',
+      sparkline: (
+        <svg className="w-20 h-8 stroke-amber-500 fill-amber-500/10" viewBox="0 0 100 30">
+          <path
+            d="M0,20 Q20,28 40,15 T80,22 T100,12 L100,30 L0,30 Z"
+            strokeWidth="0"
+          />
+          <path
+            d="M0,20 Q20,28 40,15 T80,22 T100,12"
+            fill="none"
+            strokeWidth="2"
+          />
+        </svg>
+      ),
     },
     {
-      title: 'Critical Complaints',
+      title: 'Critical Risk Cases',
       value: '12',
-      description: 'High priority risk level',
-      badgeText: 'Urgent',
+      trend: '-2 this week',
+      trendUp: false,
+      comparison: 'urgent recall review',
+      badgeText: 'High Priority',
       badgeVariant: 'danger' as const,
       icon: AlertTriangle,
-      iconColor: 'text-red-600 bg-red-50',
+      iconBg: 'bg-rose-50 text-[#EF4444]',
+      sparkline: (
+        <svg className="w-20 h-8 stroke-rose-500 fill-rose-500/10" viewBox="0 0 100 30">
+          <path
+            d="M0,10 Q25,25 50,12 T75,26 T100,18 L100,30 L0,30 Z"
+            strokeWidth="0"
+          />
+          <path
+            d="M0,10 Q25,25 50,12 T75,26 T100,18"
+            fill="none"
+            strokeWidth="2"
+          />
+        </svg>
+      ),
     },
     {
-      title: 'AI Intake Accuracy',
+      title: 'AI Ingestion Accuracy',
       value: '97.4%',
-      description: 'Automated parsing success',
-      badgeText: 'High',
+      trend: '+0.8%',
+      trendUp: true,
+      comparison: 'automated extraction',
+      badgeText: 'Optimal',
       badgeVariant: 'success' as const,
       icon: CheckCircle2,
-      iconColor: 'text-green-600 bg-green-50',
+      iconBg: 'bg-emerald-50 text-[#16A34A]',
+      sparkline: (
+        <svg className="w-20 h-8 stroke-emerald-500 fill-emerald-500/10" viewBox="0 0 100 30">
+          <path
+            d="M0,22 Q30,12 60,18 T90,8 T100,4 L100,30 L0,30 Z"
+            strokeWidth="0"
+          />
+          <path
+            d="M0,22 Q30,12 60,18 T90,8 T100,4"
+            fill="none"
+            strokeWidth="2"
+          />
+        </svg>
+      ),
     },
   ];
 
@@ -121,12 +184,12 @@ export const DashboardPage: React.FC = () => {
       title: 'Upload Complaint Document',
       description: 'Ingest PDF, DOCX, TXT or EML complaint files for automated AI extraction.',
       icon: Upload,
-      buttonText: 'Upload File',
+      buttonText: 'Upload Document',
       action: () => navigate('/upload'),
       variant: 'primary' as const,
     },
     {
-      title: 'Review Intake Queue',
+      title: 'Review Complaints Queue',
       description: 'Inspect AI extracted metadata, fill missing fields, and submit reviewed cases.',
       icon: FileText,
       buttonText: 'View Complaints',
@@ -144,11 +207,11 @@ export const DashboardPage: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-8 animate-fadeIn">
+    <div className="space-y-8 pb-8">
       {/* PAGE HEADER */}
       <PageHeader
-        title="Dashboard"
-        subtitle="AI Complaint Management Overview"
+        title="Quality Assurance Dashboard"
+        subtitle="Real-time pharmaceutical complaint analytics, risk metrics, and triage pipeline."
         actions={
           <>
             <Button
@@ -169,39 +232,58 @@ export const DashboardPage: React.FC = () => {
         }
       />
 
-      {/* SECTION 1: FOUR KPI CARDS */}
+      {/* SECTION 1: FOUR PREMIUM KPI CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {kpiData.map((kpi, idx) => {
           const Icon = kpi.icon;
           return (
-            <Card
+            <motion.div
               key={idx}
-              className="p-6 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
+              whileHover={{ y: -3 }}
+              transition={{ duration: 0.2 }}
             >
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold text-[#64748B] uppercase tracking-wider">
-                  {kpi.title}
-                </span>
-                <Badge variant={kpi.badgeVariant}>{kpi.badgeText}</Badge>
-              </div>
-              <div className="flex items-baseline justify-between">
-                <span className="text-3xl font-bold text-[#0F172A] tracking-tight">
-                  {kpi.value}
-                </span>
-                <div className={`p-2.5 rounded-xl ${kpi.iconColor}`}>
-                  <Icon className="w-5 h-5" />
+              <Card className="p-6 h-full flex flex-col justify-between hover:shadow-hover border-[#E2E8F0] transition-all">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`p-2.5 rounded-xl ${kpi.iconBg}`}>
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <Badge variant={kpi.badgeVariant}>{kpi.badgeText}</Badge>
+                  </div>
+
+                  <span className="text-xs font-semibold text-[#64748B] uppercase tracking-wider block mb-1">
+                    {kpi.title}
+                  </span>
+
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-3xl font-bold text-[#0F172A] tracking-tight">
+                      {kpi.value}
+                    </span>
+                    <div className="shrink-0">{kpi.sparkline}</div>
+                  </div>
                 </div>
-              </div>
-              <p className="text-xs text-[#64748B] mt-2">{kpi.description}</p>
-            </Card>
+
+                <div className="flex items-center space-x-1.5 mt-4 pt-3 border-t border-[#F1F5F9] text-xs">
+                  {kpi.trendUp ? (
+                    <TrendingUp className="w-3.5 h-3.5 text-[#22C55E]" />
+                  ) : (
+                    <TrendingDown className="w-3.5 h-3.5 text-[#EF4444]" />
+                  )}
+                  <span className={`font-semibold ${kpi.trendUp ? 'text-[#22C55E]' : 'text-[#EF4444]'}`}>
+                    {kpi.trend}
+                  </span>
+                  <span className="text-[#64748B] truncate">{kpi.comparison}</span>
+                </div>
+              </Card>
+            </motion.div>
           );
         })}
       </div>
 
       {/* SECTION 2: RECENT COMPLAINTS TABLE */}
       <Section
-        title="Recent Complaints"
-        subtitle="Latest customer complaint cases and processing status"
+        title="Recent Complaint Ingestions"
+        subtitle="Latest customer complaints logged into the quality management system"
         action={
           <Button
             variant="ghost"
@@ -209,35 +291,35 @@ export const DashboardPage: React.FC = () => {
             rightIcon={<ArrowRight className="w-4 h-4" />}
             onClick={() => navigate('/complaints')}
           >
-            View All
+            View All Complaints
           </Button>
         }
       >
-        <Card className="overflow-hidden border-[#E2E8F0]">
+        <Card className="overflow-hidden border-[#E2E8F0] shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50 border-b border-[#E2E8F0] text-xs font-semibold text-[#64748B] uppercase tracking-wider">
-                  <th className="py-3.5 px-6">Complaint ID</th>
-                  <th className="py-3.5 px-6">Product</th>
-                  <th className="py-3.5 px-6">Severity</th>
-                  <th className="py-3.5 px-6">Status</th>
-                  <th className="py-3.5 px-6">Risk</th>
-                  <th className="py-3.5 px-6">Created Date</th>
-                  <th className="py-3.5 px-6 text-right">Actions</th>
+                <tr className="bg-slate-50/80 border-b border-[#E2E8F0] text-xs font-semibold text-[#64748B] uppercase tracking-wider">
+                  <th className="py-4 px-6">Complaint ID</th>
+                  <th className="py-4 px-6">Product Description</th>
+                  <th className="py-4 px-6">Severity Rating</th>
+                  <th className="py-4 px-6">Status</th>
+                  <th className="py-4 px-6">Risk Assessment</th>
+                  <th className="py-4 px-6">Logged Date</th>
+                  <th className="py-4 px-6 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E2E8F0] text-sm text-[#0F172A]">
                 {recentComplaints.map((item) => (
                   <tr
                     key={item.id}
-                    className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                    className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
                     onClick={() => navigate(`/complaints/${item.id}`)}
                   >
                     <td className="py-4 px-6 font-mono font-semibold text-[#2563EB]">
                       {item.id}
                     </td>
-                    <td className="py-4 px-6 font-medium max-w-xs truncate">
+                    <td className="py-4 px-6 font-medium max-w-xs truncate text-[#0F172A]">
                       {item.product}
                     </td>
                     <td className="py-4 px-6">
@@ -247,7 +329,7 @@ export const DashboardPage: React.FC = () => {
                       <Badge variant={item.statusVariant}>{item.status}</Badge>
                     </td>
                     <td className="py-4 px-6">
-                      <Badge variant={item.riskVariant}>{item.risk}</Badge>
+                      <Badge variant={item.riskVariant} dot>{item.risk}</Badge>
                     </td>
                     <td className="py-4 px-6 text-xs text-[#64748B]">
                       {item.createdDate}
@@ -256,7 +338,7 @@ export const DashboardPage: React.FC = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        leftIcon={<Eye className="w-4 h-4 text-[#64748B]" />}
+                        leftIcon={<Eye className="w-4 h-4 text-[#64748B] group-hover:text-[#2563EB]" />}
                         onClick={() => navigate(`/complaints/${item.id}`)}
                       >
                         View
@@ -270,30 +352,32 @@ export const DashboardPage: React.FC = () => {
         </Card>
       </Section>
 
-      {/* SECTION 3: QUICK ACTIONS */}
-      <Section title="Quick Actions" subtitle="Frequently used pharmaceutical quality workflows">
+      {/* SECTION 3: QUICK ACTION WORKFLOW CARDS */}
+      <Section title="Quick Actions" subtitle="Frequently used pharmaceutical quality assurance operations">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {quickActions.map((action, idx) => {
             const Icon = action.icon;
             return (
-              <Card key={idx} className="p-6 flex flex-col justify-between hover:shadow-md transition-shadow">
-                <div>
-                  <div className="w-12 h-12 rounded-xl bg-blue-50 text-[#2563EB] flex items-center justify-center mb-4">
-                    <Icon className="w-6 h-6" />
+              <motion.div key={idx} whileHover={{ y: -2 }} transition={{ duration: 0.2 }}>
+                <Card className="p-6 flex flex-col justify-between h-full hover:shadow-hover transition-all">
+                  <div>
+                    <div className="w-12 h-12 rounded-2xl bg-blue-50 text-[#2563EB] flex items-center justify-center mb-4 border border-blue-100/60 shadow-xs">
+                      <Icon className="w-6 h-6" />
+                    </div>
+                    <h3 className="text-base font-bold text-[#0F172A] mb-1.5">{action.title}</h3>
+                    <p className="text-xs text-[#64748B] leading-relaxed mb-6">
+                      {action.description}
+                    </p>
                   </div>
-                  <h3 className="text-base font-bold text-[#0F172A] mb-1.5">{action.title}</h3>
-                  <p className="text-xs text-[#64748B] leading-relaxed mb-6">
-                    {action.description}
-                  </p>
-                </div>
-                <Button
-                  variant={action.variant}
-                  fullWidth
-                  onClick={action.action}
-                >
-                  {action.buttonText}
-                </Button>
-              </Card>
+                  <Button
+                    variant={action.variant}
+                    fullWidth
+                    onClick={action.action}
+                  >
+                    {action.buttonText}
+                  </Button>
+                </Card>
+              </motion.div>
             );
           })}
         </div>

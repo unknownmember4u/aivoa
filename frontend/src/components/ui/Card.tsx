@@ -1,9 +1,11 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 
 export interface CardProps {
   children: React.ReactNode;
   className?: string;
   onClick?: () => void;
+  hoverable?: boolean;
 }
 
 export const Card: React.FC<CardProps> & {
@@ -12,16 +14,19 @@ export const Card: React.FC<CardProps> & {
   Description: React.FC<{ children: React.ReactNode; className?: string }>;
   Content: React.FC<{ children: React.ReactNode; className?: string }>;
   Footer: React.FC<{ children: React.ReactNode; className?: string }>;
-} = ({ children, className = '', onClick }) => {
+} = ({ children, className = '', onClick, hoverable = false }) => {
+  const isInteractive = onClick || hoverable;
+
   return (
-    <div
+    <motion.div
       onClick={onClick}
-      className={`bg-white rounded-[16px] border border-[#E2E8F0] shadow-[0_4px_20px_-2px_rgba(15,23,42,0.05)] transition-shadow ${
-        onClick ? 'cursor-pointer hover:shadow-md' : ''
+      whileHover={isInteractive ? { y: -2, transition: { duration: 0.2 } } : undefined}
+      className={`bg-white rounded-[20px] border border-[#E2E8F0] shadow-[0_4px_20px_-2px_rgba(15,23,42,0.05)] transition-all duration-200 ${
+        isInteractive ? 'cursor-pointer hover:shadow-[0_12px_30px_-4px_rgba(15,23,42,0.08)] hover:border-[#CBD5E1]' : ''
       } ${className}`}
     >
       {children}
-    </div>
+    </motion.div>
   );
 };
 
@@ -30,9 +35,9 @@ const CardHeader: React.FC<{ children: React.ReactNode; className?: string; acti
   className = '',
   action,
 }) => (
-  <div className={`px-6 py-5 border-b border-[#E2E8F0] flex items-center justify-between ${className}`}>
+  <div className={`px-6 py-5 border-b border-[#E2E8F0] flex items-center justify-between gap-4 ${className}`}>
     <div>{children}</div>
-    {action && <div>{action}</div>}
+    {action && <div className="shrink-0">{action}</div>}
   </div>
 );
 
@@ -41,7 +46,7 @@ const CardTitle: React.FC<{ children: React.ReactNode; className?: string }> = (
 );
 
 const CardDescription: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
-  <p className={`text-xs text-[#64748B] mt-0.5 ${className}`}>{children}</p>
+  <p className={`text-xs text-[#64748B] mt-0.5 leading-relaxed ${className}`}>{children}</p>
 );
 
 const CardContent: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
@@ -49,7 +54,7 @@ const CardContent: React.FC<{ children: React.ReactNode; className?: string }> =
 );
 
 const CardFooter: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
-  <div className={`px-6 py-4 bg-slate-50 border-t border-[#E2E8F0] rounded-b-[16px] flex items-center justify-end gap-3 ${className}`}>
+  <div className={`px-6 py-4 bg-slate-50/80 border-t border-[#E2E8F0] rounded-b-[20px] flex items-center justify-end gap-3 ${className}`}>
     {children}
   </div>
 );

@@ -9,6 +9,7 @@ import {
   FileText,
   ChevronLeft,
   ChevronRight,
+  Filter,
 } from 'lucide-react';
 import {
   PageHeader,
@@ -17,8 +18,8 @@ import {
   Button,
   Input,
   Select,
-  Spinner,
   EmptyState,
+  SkeletonTable,
 } from '@/components/ui';
 import { useGetComplaintsQuery } from '@/services/complaintApi';
 
@@ -59,9 +60,9 @@ export const ComplaintListPage: React.FC = () => {
 
   const getRiskBadge = (risk?: string) => {
     const r = (risk || 'MEDIUM').toUpperCase();
-    if (r === 'HIGH' || r === 'CRITICAL') return <Badge variant="danger">HIGH</Badge>;
-    if (r === 'MEDIUM') return <Badge variant="warning">MEDIUM</Badge>;
-    return <Badge variant="success">LOW</Badge>;
+    if (r === 'HIGH' || r === 'CRITICAL') return <Badge variant="danger" dot>HIGH</Badge>;
+    if (r === 'MEDIUM') return <Badge variant="warning" dot>MEDIUM</Badge>;
+    return <Badge variant="success" dot>LOW</Badge>;
   };
 
   const getStatusBadge = (st: string) => {
@@ -77,11 +78,11 @@ export const ComplaintListPage: React.FC = () => {
   const totalPages = data?.total_pages || 1;
 
   return (
-    <div className="space-y-8 animate-fadeIn">
+    <div className="space-y-6 pb-8">
       {/* PAGE HEADER */}
       <PageHeader
-        title="Complaints"
-        subtitle="Manage, review, and track pharmaceutical customer complaints."
+        title="Complaints Queue"
+        subtitle="Track, filter, and inspect pharmaceutical customer complaint cases."
         actions={
           <Button
             variant="primary"
@@ -93,14 +94,19 @@ export const ComplaintListPage: React.FC = () => {
         }
       />
 
-      {/* FILTER TOOLBAR */}
+      {/* ALIGNED FILTER TOOLBAR CARD */}
       <Card className="p-5 border-[#E2E8F0] shadow-sm">
+        <div className="flex items-center space-x-2 pb-3 mb-4 border-b border-[#F1F5F9] text-xs font-bold text-[#0F172A] uppercase tracking-wider">
+          <Filter className="w-4 h-4 text-[#2563EB]" />
+          <span>Filters & Search Toolbar</span>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
           {/* Search Input (4 cols) */}
           <div className="lg:col-span-4">
             <Input
               label="Search Complaints"
-              placeholder="Product, batch, customer name..."
+              placeholder="Product, batch number, customer..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -181,14 +187,14 @@ export const ComplaintListPage: React.FC = () => {
 
       {/* ERROR BANNER STATE */}
       {isError && (
-        <Card className="p-6 bg-red-50 border-red-200 text-red-800">
+        <Card className="p-6 bg-rose-50/80 border-rose-200 text-rose-900">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 text-[#DC2626] shrink-0" />
+              <AlertCircle className="w-5 h-5 text-[#EF4444] shrink-0" />
               <div>
-                <h4 className="font-bold text-sm">Failed to load complaints</h4>
-                <p className="text-xs text-red-700 mt-0.5">
-                  {(error as any)?.data?.detail || 'Network error occurred while fetching complaint records.'}
+                <h4 className="font-bold text-sm">Failed to retrieve complaint records</h4>
+                <p className="text-xs text-rose-700 mt-0.5">
+                  {(error as any)?.data?.detail || 'Network failure communicating with complaint service.'}
                 </p>
               </div>
             </div>
@@ -199,57 +205,52 @@ export const ComplaintListPage: React.FC = () => {
         </Card>
       )}
 
-      {/* LOADING STATE */}
-      {isLoading && (
-        <Card className="p-16 text-center">
-          <Spinner size="lg" className="text-[#2563EB] mb-4" />
-          <p className="text-sm font-medium text-[#64748B]">Loading complaint records...</p>
-        </Card>
-      )}
+      {/* SKELETON SHIMMER LOADING STATE */}
+      {isLoading && <SkeletonTable rows={6} />}
 
       {/* EMPTY STATE */}
       {!isLoading && !isError && items.length === 0 && (
         <EmptyState
-          icon={<FileText className="w-6 h-6 text-[#64748B]" />}
-          title="No Complaints Found"
+          icon={<FileText className="w-6 h-6 text-[#2563EB]" />}
+          title="No Complaints Match Search"
           description="No customer complaints match your current search and filter criteria."
           action={
             <Button variant="outline" onClick={handleResetFilters}>
-              Clear Filters
+              Reset Filter Options
             </Button>
           }
         />
       )}
 
-      {/* MAIN DATA TABLE & MOBILE CARDS */}
+      {/* DATA TABLE & MOBILE CARDS */}
       {!isLoading && !isError && items.length > 0 && (
         <Card className="overflow-hidden border-[#E2E8F0] shadow-sm">
-          {/* DESKTOP / TABLET TABLE VIEW */}
+          {/* DESKTOP TABLE VIEW */}
           <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50 border-b border-[#E2E8F0] text-xs font-semibold text-[#64748B] uppercase tracking-wider">
-                  <th className="py-3.5 px-6">Complaint ID</th>
-                  <th className="py-3.5 px-6">Product</th>
-                  <th className="py-3.5 px-6">Customer</th>
-                  <th className="py-3.5 px-6">Severity</th>
-                  <th className="py-3.5 px-6">Risk</th>
-                  <th className="py-3.5 px-6">Status</th>
-                  <th className="py-3.5 px-6">Date</th>
-                  <th className="py-3.5 px-6 text-right">Actions</th>
+                <tr className="bg-slate-50/80 border-b border-[#E2E8F0] text-xs font-semibold text-[#64748B] uppercase tracking-wider">
+                  <th className="py-4 px-6">Complaint ID</th>
+                  <th className="py-4 px-6">Product Description</th>
+                  <th className="py-4 px-6">Customer</th>
+                  <th className="py-4 px-6">Severity</th>
+                  <th className="py-4 px-6">Risk Assessment</th>
+                  <th className="py-4 px-6">Status</th>
+                  <th className="py-4 px-6">Date</th>
+                  <th className="py-4 px-6 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E2E8F0] text-sm text-[#0F172A]">
                 {items.map((item) => (
                   <tr
                     key={item.id}
-                    className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                    className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
                     onClick={() => navigate(`/complaints/${item.id}`)}
                   >
                     <td className="py-4 px-6 font-mono font-semibold text-[#2563EB] text-xs">
                       {item.id.slice(0, 8)}...
                     </td>
-                    <td className="py-4 px-6 font-medium max-w-xs truncate">
+                    <td className="py-4 px-6 font-medium max-w-xs truncate text-[#0F172A]">
                       {item.product_name}
                     </td>
                     <td className="py-4 px-6 text-xs text-[#475569]">
@@ -265,7 +266,7 @@ export const ComplaintListPage: React.FC = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        leftIcon={<Eye className="w-4 h-4 text-[#64748B]" />}
+                        leftIcon={<Eye className="w-4 h-4 text-[#64748B] group-hover:text-[#2563EB]" />}
                         onClick={() => navigate(`/complaints/${item.id}`)}
                       >
                         View
@@ -321,16 +322,16 @@ export const ComplaintListPage: React.FC = () => {
           </div>
 
           {/* PAGINATION FOOTER */}
-          <div className="px-6 py-4 bg-slate-50 border-t border-[#E2E8F0] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#64748B]">
+          <div className="px-6 py-4 bg-slate-50/80 border-t border-[#E2E8F0] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#64748B]">
             <div className="flex items-center space-x-3">
-              <span>Items per page:</span>
+              <span>Rows per page:</span>
               <select
                 value={pageSize}
                 onChange={(e) => {
                   setPageSize(Number(e.target.value));
                   setPage(1);
                 }}
-                className="bg-white border border-[#E2E8F0] rounded-md px-2 py-1 text-xs text-[#0F172A] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
+                className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1 text-xs text-[#0F172A] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
               >
                 <option value={10}>10</option>
                 <option value={20}>20</option>

@@ -7,6 +7,9 @@ import {
   AlertCircle,
   Sparkles,
   Send,
+  ShieldCheck,
+  PackageCheck,
+  Tag,
 } from 'lucide-react';
 import {
   PageHeader,
@@ -16,7 +19,6 @@ import {
   Select,
   Badge,
   Button,
-  Divider,
   EmptyState,
 } from '@/components/ui';
 import { useSubmitComplaintMutation } from '@/services/complaintApi';
@@ -101,7 +103,7 @@ export const ComplaintReviewPage: React.FC = () => {
   // Empty State Fallback if opened directly without navigation state
   if (!state.extractedData && !state.documentId) {
     return (
-      <div className="space-y-8 animate-fadeIn">
+      <div className="space-y-8 max-w-[800px] mx-auto pb-10">
         <PageHeader
           title="Review AI Extracted Complaint"
           subtitle="Verify the extracted information before submitting."
@@ -145,56 +147,58 @@ export const ComplaintReviewPage: React.FC = () => {
 
   const getRiskBadge = (risk?: string) => {
     const r = (risk || 'MEDIUM').toUpperCase();
-    if (r === 'HIGH' || r === 'CRITICAL') return <Badge variant="danger">HIGH RISK</Badge>;
-    if (r === 'MEDIUM') return <Badge variant="warning">MEDIUM RISK</Badge>;
-    return <Badge variant="success">LOW RISK</Badge>;
+    if (r === 'HIGH' || r === 'CRITICAL') return <Badge variant="danger" dot>HIGH RISK</Badge>;
+    if (r === 'MEDIUM') return <Badge variant="warning" dot>MEDIUM RISK</Badge>;
+    return <Badge variant="success" dot>LOW RISK</Badge>;
   };
 
   return (
-    <div className="space-y-8 animate-fadeIn">
+    <div className="space-y-8 pb-10">
       {/* PAGE HEADER */}
       <PageHeader
         title="Review AI Extracted Complaint"
-        subtitle="Verify, correct, and finalize the extracted complaint fields before submission."
+        subtitle="Verify, correct, and finalize extracted fields across segmented cards before submission."
       />
 
       {/* TWO COLUMN RESPONSIVE LAYOUT */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* LEFT COLUMN: AI SUMMARY & METRICS (4 cols desktop) */}
-        <div className="lg:col-span-4 space-y-6">
+        {/* LEFT COLUMN: STICKY AI SUMMARY & METRICS (4 cols desktop) */}
+        <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-24">
           <Card className="p-6 border-[#E2E8F0] shadow-sm space-y-5">
             <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
               <div className="flex items-center space-x-2">
-                <Sparkles className="w-5 h-5 text-[#2563EB]" />
-                <h3 className="font-bold text-base text-[#0F172A]">AI Extraction Summary</h3>
+                <div className="p-1.5 bg-blue-50 text-[#2563EB] rounded-lg">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <h3 className="font-bold text-sm text-[#0F172A]">AI Extraction Summary</h3>
               </div>
               {getRiskBadge(state.riskLevel)}
             </div>
 
             <div>
-              <span className="text-xs font-semibold text-[#64748B] uppercase tracking-wider block mb-1.5">
-                Executive AI Summary
+              <span className="text-xs font-semibold text-[#64748B] uppercase tracking-wider block mb-2">
+                Executive AI Narrative
               </span>
-              <p className="text-sm text-[#0F172A] leading-relaxed bg-slate-50 p-3.5 rounded-xl border border-[#E2E8F0]">
+              <p className="text-xs text-[#0F172A] leading-relaxed bg-slate-50 p-3.5 rounded-xl border border-[#E2E8F0]">
                 {state.aiSummary || 'No automated summary generated.'}
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 pt-2">
-              <div className="bg-blue-50/60 p-3 rounded-xl border border-blue-100">
-                <span className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block">
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              <div className="bg-blue-50/70 p-3 rounded-xl border border-blue-100">
+                <span className="text-[10px] font-semibold text-[#64748B] uppercase tracking-wider block">
                   AI Confidence
                 </span>
-                <span className="text-xl font-bold text-[#2563EB] mt-0.5 block">
-                  {((state.confidenceScore || 0.92) * 100).toFixed(1)}%
+                <span className="text-lg font-bold text-[#2563EB] mt-0.5 block">
+                  {((state.confidenceScore || 0.94) * 100).toFixed(1)}%
                 </span>
               </div>
 
               <div className="bg-slate-50 p-3 rounded-xl border border-[#E2E8F0]">
-                <span className="text-[11px] font-semibold text-[#64748B] uppercase tracking-wider block">
+                <span className="text-[10px] font-semibold text-[#64748B] uppercase tracking-wider block">
                   Missing Fields
                 </span>
-                <span className="text-xl font-bold text-[#0F172A] mt-0.5 block">
+                <span className="text-lg font-bold text-[#0F172A] mt-0.5 block">
                   {missingFields.length}
                 </span>
               </div>
@@ -202,7 +206,7 @@ export const ComplaintReviewPage: React.FC = () => {
 
             {state.documentId && (
               <div className="text-xs text-[#64748B] pt-3 border-t border-[#E2E8F0]">
-                <span className="font-medium text-[#0F172A]">Linked Document ID:</span>
+                <span className="font-medium text-[#0F172A]">Source Document ID:</span>
                 <p className="font-mono text-[11px] text-[#2563EB] truncate mt-0.5">
                   {state.documentId}
                 </p>
@@ -211,213 +215,227 @@ export const ComplaintReviewPage: React.FC = () => {
           </Card>
         </div>
 
-        {/* RIGHT COLUMN: COMPLAINT REVIEW FORM (8 cols desktop) */}
+        {/* RIGHT COLUMN: COMPLAINT REVIEW FORM CARDS (8 cols desktop) */}
         <div className="lg:col-span-8">
-          <Card className="p-6 sm:p-8 border-[#E2E8F0] shadow-sm">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
             {/* SERVER ERROR ALERT */}
             {apiError && (
               <div
                 role="alert"
-                className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3 text-xs text-red-800"
+                className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-3 text-xs text-rose-800"
               >
-                <AlertCircle className="w-4 h-4 text-[#DC2626] shrink-0 mt-0.5" />
+                <AlertCircle className="w-4 h-4 text-[#EF4444] shrink-0 mt-0.5" />
                 <span className="font-medium">{apiError}</span>
               </div>
             )}
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
-              {/* SECTION: GENERAL & CUSTOMER INFO */}
-              <div>
-                <h4 className="text-sm font-bold text-[#0F172A] uppercase tracking-wider mb-4 pb-2 border-b border-[#E2E8F0]">
-                  General & Customer Metadata
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      {isMissing('customer_name') && <Badge variant="warning">Required</Badge>}
-                    </div>
-                    <Input
-                      label="Customer Name"
-                      placeholder="e.g. John Doe / Apex Hospital"
-                      error={errors.customer_name?.message}
-                      helperText={
-                        isMissing('customer_name')
-                          ? 'Missing from AI extraction. Please fill in manually.'
-                          : undefined
-                      }
-                      {...register('customer_name')}
-                    />
-                  </div>
-
-                  <div>
-                    <Select
-                      label="Complaint Source"
-                      options={[
-                        { value: 'EMAIL', label: 'Email Communication' },
-                        { value: 'PHONE', label: 'Phone Call / Customer Care' },
-                        { value: 'WEB_PORTAL', label: 'Web Portal Submission' },
-                        { value: 'REGULATORY_NOTICE', label: 'Regulatory Authority Notice' },
-                      ]}
-                      error={errors.complaint_source?.message}
-                      {...register('complaint_source')}
-                    />
-                  </div>
+            {/* CARD 1: GENERAL & CUSTOMER INFO */}
+            <Card className="p-6 sm:p-8 border-[#E2E8F0] shadow-sm space-y-6">
+              <div className="flex items-center space-x-3 pb-4 border-b border-[#E2E8F0]">
+                <div className="p-2 rounded-xl bg-blue-50 text-[#2563EB]">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-[#0F172A]">General & Customer Information</h3>
+                  <p className="text-xs text-[#64748B]">Complainant details and origin channel</p>
                 </div>
               </div>
 
-              {/* SECTION: PRODUCT & BATCH DETAILS */}
-              <div>
-                <h4 className="text-sm font-bold text-[#0F172A] uppercase tracking-wider mb-4 pb-2 border-b border-[#E2E8F0]">
-                  Product & Batch Parameters
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="sm:col-span-2">
-                    <div className="flex items-center justify-between mb-1">
-                      {isMissing('product_name') && <Badge variant="warning">Required</Badge>}
-                    </div>
-                    <Input
-                      label="Product Name"
-                      placeholder="e.g. Amoxicillin 500mg Capsule"
-                      error={errors.product_name?.message}
-                      helperText={
-                        isMissing('product_name')
-                          ? 'Missing from AI extraction. Please fill in manually.'
-                          : undefined
-                      }
-                      {...register('product_name')}
-                    />
-                  </div>
-
-                  <div>
-                    <Input
-                      label="Strength / Grade"
-                      placeholder="e.g. 500mg"
-                      error={errors.strength_grade?.message}
-                      {...register('strength_grade')}
-                    />
-                  </div>
-
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      {isMissing('batch_number') && <Badge variant="warning">Required</Badge>}
-                    </div>
-                    <Input
-                      label="Batch Number"
-                      placeholder="e.g. BATCH-9982"
-                      error={errors.batch_number?.message}
-                      helperText={
-                        isMissing('batch_number')
-                          ? 'Missing from AI extraction. Please fill in manually.'
-                          : undefined
-                      }
-                      {...register('batch_number')}
-                    />
-                  </div>
-
-                  <div>
-                    <Input
-                      label="Manufacturing Date"
-                      type="date"
-                      error={errors.manufacturing_date?.message}
-                      {...register('manufacturing_date')}
-                    />
-                  </div>
-
-                  <div>
-                    <Input
-                      label="Expiry Date"
-                      type="date"
-                      error={errors.expiry_date?.message}
-                      {...register('expiry_date')}
-                    />
-                  </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div>
+                  {isMissing('customer_name') && (
+                    <Badge variant="warning" className="mb-1.5">Missing Flag</Badge>
+                  )}
+                  <Input
+                    label="Customer Name"
+                    placeholder="e.g. John Doe / Apex Hospital"
+                    error={errors.customer_name?.message}
+                    helperText={
+                      isMissing('customer_name')
+                        ? 'Missing from AI extraction. Please fill in manually.'
+                        : undefined
+                    }
+                    {...register('customer_name')}
+                  />
                 </div>
-              </div>
 
-              {/* SECTION: COMPLAINT TYPE & DESCRIPTION */}
-              <div>
-                <h4 className="text-sm font-bold text-[#0F172A] uppercase tracking-wider mb-4 pb-2 border-b border-[#E2E8F0]">
-                  Defect & Event Description
-                </h4>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <Input
-                        label="Complaint Type / Defect Category"
-                        placeholder="e.g. Discoloration, Packaging Seal Damage"
-                        error={errors.complaint_type?.message}
-                        {...register('complaint_type')}
-                      />
-                    </div>
-
-                    <div>
-                      <Input
-                        label="Quantity Affected"
-                        type="number"
-                        placeholder="0"
-                        error={errors.quantity?.message}
-                        {...register('quantity')}
-                      />
-                    </div>
-                  </div>
-
-                  <Textarea
-                    label="Detailed Complaint Description"
-                    rows={4}
-                    placeholder="Enter comprehensive complaint narrative..."
-                    error={errors.complaint_description?.message}
-                    {...register('complaint_description')}
+                <div>
+                  <Select
+                    label="Complaint Source"
+                    options={[
+                      { value: 'EMAIL', label: 'Email Communication' },
+                      { value: 'PHONE', label: 'Phone Call / Customer Care' },
+                      { value: 'WEB_PORTAL', label: 'Web Portal Submission' },
+                      { value: 'REGULATORY_NOTICE', label: 'Regulatory Authority Notice' },
+                    ]}
+                    error={errors.complaint_source?.message}
+                    {...register('complaint_source')}
                   />
                 </div>
               </div>
+            </Card>
 
-              {/* SECTION: RISK & SEVERITY RATINGS */}
-              <div>
-                <h4 className="text-sm font-bold text-[#0F172A] uppercase tracking-wider mb-4 pb-2 border-b border-[#E2E8F0]">
-                  Triage & Severity Classification
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <Input
-                      label="Complaint Date"
-                      type="date"
-                      error={errors.complaint_date?.message}
-                      {...register('complaint_date')}
-                    />
-                  </div>
-
-                  <div>
-                    <Select
-                      label="Severity Rating"
-                      options={[
-                        { value: 'CRITICAL', label: 'CRITICAL (Adverse Event / Recall Risk)' },
-                        { value: 'MAJOR', label: 'MAJOR (Quality / Efficacy Issue)' },
-                        { value: 'MINOR', label: 'MINOR (Packaging / Cosmetic Labeling)' },
-                      ]}
-                      error={errors.severity?.message}
-                      {...register('severity')}
-                    />
-                  </div>
-
-                  <div>
-                    <Select
-                      label="Priority Rating"
-                      options={[
-                        { value: 'HIGH', label: 'HIGH' },
-                        { value: 'MEDIUM', label: 'MEDIUM' },
-                        { value: 'LOW', label: 'LOW' },
-                      ]}
-                      error={errors.priority?.message}
-                      {...register('priority')}
-                    />
-                  </div>
+            {/* CARD 2: PRODUCT & BATCH PARAMETERS */}
+            <Card className="p-6 sm:p-8 border-[#E2E8F0] shadow-sm space-y-6">
+              <div className="flex items-center space-x-3 pb-4 border-b border-[#E2E8F0]">
+                <div className="p-2 rounded-xl bg-emerald-50 text-[#16A34A]">
+                  <PackageCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-[#0F172A]">Product & Batch Details</h3>
+                  <p className="text-xs text-[#64748B]">Pharmaceutical formulation and batch metadata</p>
                 </div>
               </div>
 
-              <Divider />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                <div className="sm:col-span-2">
+                  {isMissing('product_name') && (
+                    <Badge variant="warning" className="mb-1.5">Missing Flag</Badge>
+                  )}
+                  <Input
+                    label="Product Name"
+                    placeholder="e.g. Amoxicillin 500mg Capsule"
+                    error={errors.product_name?.message}
+                    helperText={
+                      isMissing('product_name')
+                        ? 'Missing from AI extraction. Please fill in manually.'
+                        : undefined
+                    }
+                    {...register('product_name')}
+                  />
+                </div>
 
-              {/* SUBMIT BUTTON */}
-              <div className="flex justify-end gap-3">
+                <div>
+                  <Input
+                    label="Strength / Grade"
+                    placeholder="e.g. 500mg"
+                    error={errors.strength_grade?.message}
+                    {...register('strength_grade')}
+                  />
+                </div>
+
+                <div>
+                  {isMissing('batch_number') && (
+                    <Badge variant="warning" className="mb-1.5">Missing Flag</Badge>
+                  )}
+                  <Input
+                    label="Batch Number"
+                    placeholder="e.g. BATCH-9982"
+                    error={errors.batch_number?.message}
+                    helperText={
+                      isMissing('batch_number')
+                        ? 'Missing from AI extraction. Please fill in manually.'
+                        : undefined
+                    }
+                    {...register('batch_number')}
+                  />
+                </div>
+
+                <div>
+                  <Input
+                    label="Manufacturing Date"
+                    type="date"
+                    error={errors.manufacturing_date?.message}
+                    {...register('manufacturing_date')}
+                  />
+                </div>
+
+                <div>
+                  <Input
+                    label="Expiry Date"
+                    type="date"
+                    error={errors.expiry_date?.message}
+                    {...register('expiry_date')}
+                  />
+                </div>
+              </div>
+            </Card>
+
+            {/* CARD 3: COMPLAINT DESCRIPTION & DEFECT */}
+            <Card className="p-6 sm:p-8 border-[#E2E8F0] shadow-sm space-y-6">
+              <div className="flex items-center space-x-3 pb-4 border-b border-[#E2E8F0]">
+                <div className="p-2 rounded-xl bg-amber-50 text-[#D97706]">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-[#0F172A]">Complaint Information & Defect</h3>
+                  <p className="text-xs text-[#64748B]">Defect type and narrative event description</p>
+                </div>
+              </div>
+
+              <div className="space-y-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <Input
+                    label="Defect Category / Complaint Type"
+                    placeholder="e.g. Discoloration, Packaging Seal Damage"
+                    error={errors.complaint_type?.message}
+                    {...register('complaint_type')}
+                  />
+
+                  <Input
+                    label="Quantity Affected"
+                    type="number"
+                    placeholder="0"
+                    error={errors.quantity?.message}
+                    {...register('quantity')}
+                  />
+                </div>
+
+                <Textarea
+                  label="Detailed Complaint Narrative"
+                  rows={4}
+                  placeholder="Enter full narrative event description..."
+                  error={errors.complaint_description?.message}
+                  {...register('complaint_description')}
+                />
+              </div>
+            </Card>
+
+            {/* CARD 4: TRIAGE & SEVERITY CLASSIFICATION */}
+            <Card className="p-6 sm:p-8 border-[#E2E8F0] shadow-sm space-y-6">
+              <div className="flex items-center space-x-3 pb-4 border-b border-[#E2E8F0]">
+                <div className="p-2 rounded-xl bg-rose-50 text-[#EF4444]">
+                  <Tag className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-[#0F172A]">Risk Triage & Severity</h3>
+                  <p className="text-xs text-[#64748B]">Regulatory urgency and recall risk classification</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                <Input
+                  label="Complaint Date"
+                  type="date"
+                  error={errors.complaint_date?.message}
+                  {...register('complaint_date')}
+                />
+
+                <Select
+                  label="Severity Rating"
+                  options={[
+                    { value: 'CRITICAL', label: 'CRITICAL (Adverse Event / Recall Risk)' },
+                    { value: 'MAJOR', label: 'MAJOR (Quality / Efficacy Issue)' },
+                    { value: 'MINOR', label: 'MINOR (Packaging / Cosmetic Labeling)' },
+                  ]}
+                  error={errors.severity?.message}
+                  {...register('severity')}
+                />
+
+                <Select
+                  label="Priority Rating"
+                  options={[
+                    { value: 'HIGH', label: 'HIGH' },
+                    { value: 'MEDIUM', label: 'MEDIUM' },
+                    { value: 'LOW', label: 'LOW' },
+                  ]}
+                  error={errors.priority?.message}
+                  {...register('priority')}
+                />
+              </div>
+
+              {/* ACTION FOOTER */}
+              <div className="pt-4 border-t border-[#E2E8F0] flex justify-end gap-3">
                 <Button
                   type="button"
                   variant="outline"
@@ -434,11 +452,11 @@ export const ComplaintReviewPage: React.FC = () => {
                   disabled={isLoading}
                   leftIcon={<Send className="w-4 h-4" />}
                 >
-                  Submit Final Complaint
+                  Submit Finalized Complaint
                 </Button>
               </div>
-            </form>
-          </Card>
+            </Card>
+          </form>
         </div>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 
 export interface ModalProps {
@@ -43,8 +44,6 @@ export const Modal: React.FC<ModalProps> = ({
     };
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
   const sizeClasses = {
     sm: 'max-w-md',
     md: 'max-w-lg',
@@ -53,49 +52,61 @@ export const Modal: React.FC<ModalProps> = ({
   };
 
   return (
-    <div
-      aria-modal="true"
-      role="dialog"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
-    >
-      {/* Backdrop */}
-      <div
-        onClick={onClose}
-        className="fixed inset-0 bg-slate-900/60 backdrop-blur-none transition-opacity duration-150"
-        aria-hidden="true"
-      />
+    <AnimatePresence>
+      {isOpen && (
+        <div
+          aria-modal="true"
+          role="dialog"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
+        >
+          {/* Backdrop */}
+          <motion.div
+            onClick={onClose}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-slate-950/50 backdrop-blur-sm"
+            aria-hidden="true"
+          />
 
-      {/* Modal Card */}
-      <div
-        className={`relative w-full ${sizeClasses[size]} bg-white rounded-[16px] shadow-[0_20px_25px_-5px_rgba(15,23,42,0.1)] border border-[#E2E8F0] z-10 flex flex-col max-h-[90vh] my-auto`}
-      >
-        {/* Header */}
-        {(title || description) && (
-          <div className="px-6 py-5 border-b border-[#E2E8F0] flex items-start justify-between">
-            <div>
-              {title && <h2 className="text-xl font-bold text-[#0F172A] tracking-tight">{title}</h2>}
-              {description && <p className="text-xs text-[#64748B] mt-1">{description}</p>}
-            </div>
-            <button
-              onClick={onClose}
-              className="text-[#64748B] hover:text-[#0F172A] p-1 rounded-lg hover:bg-slate-100 transition-colors"
-              aria-label="Close modal"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        )}
+          {/* Modal Card */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className={`relative w-full ${sizeClasses[size]} bg-white rounded-[24px] shadow-dropdown border border-[#E2E8F0] z-10 flex flex-col max-h-[90vh] my-auto overflow-hidden`}
+          >
+            {/* Header */}
+            {(title || description) && (
+              <div className="px-6 py-5 border-b border-[#E2E8F0] flex items-start justify-between">
+                <div>
+                  {title && <h2 className="text-xl font-bold text-[#0F172A] tracking-tight">{title}</h2>}
+                  {description && <p className="text-xs text-[#64748B] mt-1">{description}</p>}
+                </div>
+                <button
+                  onClick={onClose}
+                  className="text-[#64748B] hover:text-[#0F172A] p-1.5 rounded-xl hover:bg-slate-100 transition-colors"
+                  aria-label="Close modal"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            )}
 
-        {/* Content */}
-        <div className="p-6 overflow-y-auto flex-1">{children}</div>
+            {/* Content */}
+            <div className="p-6 overflow-y-auto flex-1">{children}</div>
 
-        {/* Footer */}
-        {footer && (
-          <div className="px-6 py-4 bg-slate-50 border-t border-[#E2E8F0] rounded-b-[16px] flex items-center justify-end gap-3">
-            {footer}
-          </div>
-        )}
-      </div>
-    </div>
+            {/* Footer */}
+            {footer && (
+              <div className="px-6 py-4 bg-slate-50/80 border-t border-[#E2E8F0] rounded-b-[24px] flex items-center justify-end gap-3">
+                {footer}
+              </div>
+            )}
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
   );
 };

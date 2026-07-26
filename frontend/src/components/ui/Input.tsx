@@ -29,13 +29,13 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     const inputId = customId || generatedId;
 
     const baseInputStyles =
-      'w-full bg-white border text-sm text-[#0F172A] placeholder-[#94A3B8] rounded-lg transition-colors duration-150 focus:outline-none focus:ring-2 disabled:bg-slate-50 disabled:text-[#94A3B8] disabled:cursor-not-allowed';
+      'w-full bg-white border text-sm text-[#0F172A] placeholder-[#94A3B8] rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 disabled:bg-slate-50 disabled:text-[#94A3B8] disabled:cursor-not-allowed shadow-xs';
 
     const borderStyles = error
-      ? 'border-[#DC2626] focus:border-[#DC2626] focus:ring-[#DC2626]/20'
-      : 'border-[#E2E8F0] focus:border-[#2563EB] focus:ring-[#2563EB]/20';
+      ? 'border-[#EF4444] focus:border-[#EF4444] focus:ring-[#EF4444]/20'
+      : 'border-[#E2E8F0] hover:border-[#CBD5E1] focus:border-[#2563EB] focus:ring-[#2563EB]/20';
 
-    const paddingStyles = `${leftIcon ? 'pl-10' : 'pl-3.5'} ${rightIcon ? 'pr-10' : 'pr-3.5'} py-2.5`;
+    const paddingStyles = `${leftIcon ? 'pl-10' : 'pl-4'} ${rightIcon ? 'pr-10' : 'pr-4'} py-2.5`;
 
     return (
       <div className={`${fullWidth ? 'w-full' : ''}`}>
@@ -49,7 +49,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         )}
         <div className="relative flex items-center">
           {leftIcon && (
-            <div className="absolute left-3.5 text-[#64748B] pointer-events-none flex items-center">
+            <div className="absolute left-3.5 text-[#64748B] pointer-events-none flex items-center shrink-0">
               {leftIcon}
             </div>
           )}
@@ -63,13 +63,13 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             {...props}
           />
           {rightIcon && (
-            <div className="absolute right-3.5 text-[#64748B] pointer-events-none flex items-center">
+            <div className="absolute right-3.5 text-[#64748B] pointer-events-none flex items-center shrink-0">
               {rightIcon}
             </div>
           )}
         </div>
         {error && (
-          <p id={`${inputId}-error`} className="mt-1 text-xs text-[#DC2626] font-medium">
+          <p id={`${inputId}-error`} className="mt-1 text-xs text-[#EF4444] font-medium">
             {error}
           </p>
         )}

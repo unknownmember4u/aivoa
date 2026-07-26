@@ -35,11 +35,11 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     const selectId = customId || generatedId;
 
     const baseStyles =
-      'w-full bg-white border text-sm text-[#0F172A] rounded-lg transition-colors duration-150 px-3.5 py-2.5 focus:outline-none focus:ring-2 disabled:bg-slate-50 disabled:text-[#94A3B8] disabled:cursor-not-allowed appearance-none pr-10';
+      'w-full bg-white border text-sm text-[#0F172A] rounded-xl transition-all duration-200 px-4 py-2.5 focus:outline-none focus:ring-2 disabled:bg-slate-50 disabled:text-[#94A3B8] disabled:cursor-not-allowed appearance-none pr-10 shadow-xs cursor-pointer';
 
     const borderStyles = error
-      ? 'border-[#DC2626] focus:border-[#DC2626] focus:ring-[#DC2626]/20'
-      : 'border-[#E2E8F0] focus:border-[#2563EB] focus:ring-[#2563EB]/20';
+      ? 'border-[#EF4444] focus:border-[#EF4444] focus:ring-[#EF4444]/20'
+      : 'border-[#E2E8F0] hover:border-[#CBD5E1] focus:border-[#2563EB] focus:ring-[#2563EB]/20';
 
     return (
       <div className={`${fullWidth ? 'w-full' : ''}`}>
@@ -87,7 +87,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           </div>
         </div>
         {error && (
-          <p id={`${selectId}-error`} className="mt-1 text-xs text-[#DC2626] font-medium">
+          <p id={`${selectId}-error`} className="mt-1 text-xs text-[#EF4444] font-medium">
             {error}
           </p>
         )}

@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
   ArrowLeft,
   Send,
   ShieldCheck,
   AlertCircle,
-  MessageSquare,
+  Sparkles,
 } from 'lucide-react';
 import {
   PageHeader,
@@ -72,11 +73,11 @@ export const ComplaintChatPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fadeIn max-w-[900px] mx-auto flex flex-col min-h-[calc(100vh-8rem)]">
+    <div className="space-y-6 max-w-[960px] mx-auto flex flex-col min-h-[calc(100vh-8.5rem)] pb-8">
       {/* PAGE HEADER */}
       <PageHeader
         title="AI Complaint Assistant"
-        subtitle="Grounded AI assistant for this complaint record."
+        subtitle="Grounded Q&A assistant trained on this specific complaint record and document text."
         actions={
           <Button
             variant="outline"
@@ -88,12 +89,14 @@ export const ComplaintChatPage: React.FC = () => {
         }
       />
 
-      {/* GROUNDING NOTICE BADGE BAR */}
-      <div className="flex items-center space-x-3 p-3 bg-blue-50/70 border border-blue-100 rounded-xl text-xs text-slate-700">
+      {/* GROUNDING NOTICE BANNER */}
+      <div className="flex items-center space-x-3 p-3.5 bg-blue-50/80 border border-blue-100/80 rounded-2xl text-xs text-slate-700 shadow-xs">
         <Badge variant="info" icon={<ShieldCheck className="w-3.5 h-3.5" />}>
-          Grounded Responses
+          Grounded Intelligence
         </Badge>
-        <span>Responses are generated only from this complaint and uploaded documents.</span>
+        <span className="font-medium">
+          Responses are generated strictly from the uploaded complaint document and audit history.
+        </span>
       </div>
 
       {/* MAIN CONVERSATION CARD */}
@@ -104,17 +107,17 @@ export const ComplaintChatPage: React.FC = () => {
           {isHistoryLoading && (
             <div className="py-16 text-center space-y-3">
               <Spinner size="md" className="text-[#2563EB]" />
-              <p className="text-xs font-medium text-[#64748B]">Loading conversation history...</p>
+              <p className="text-xs font-medium text-[#64748B]">Loading chat history...</p>
             </div>
           )}
 
           {/* FETCH ERROR */}
           {isError && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-center justify-between text-xs text-red-800">
+            <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center justify-between text-xs text-rose-800">
               <div className="flex items-center space-x-2">
-                <AlertCircle className="w-4 h-4 text-[#DC2626]" />
+                <AlertCircle className="w-4 h-4 text-[#EF4444]" />
                 <span>
-                  {(error as any)?.data?.detail || 'Unable to load message history for this complaint.'}
+                  {(error as any)?.data?.detail || 'Unable to load chat history for this complaint.'}
                 </span>
               </div>
               <Button variant="outline" size="sm" onClick={() => refetch()}>
@@ -125,9 +128,9 @@ export const ComplaintChatPage: React.FC = () => {
 
           {/* LOCAL SEND ERROR */}
           {localError && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-center justify-between text-xs text-red-800">
+            <div className="p-3 bg-rose-50 border border-rose-200 rounded-2xl flex items-center justify-between text-xs text-rose-800">
               <div className="flex items-center space-x-2">
-                <AlertCircle className="w-4 h-4 text-[#DC2626]" />
+                <AlertCircle className="w-4 h-4 text-[#EF4444]" />
                 <span>{localError}</span>
               </div>
               <button onClick={() => setLocalError(null)} className="font-semibold underline">
@@ -139,9 +142,9 @@ export const ComplaintChatPage: React.FC = () => {
           {/* EMPTY CONVERSATION STATE */}
           {!isHistoryLoading && !isError && messages.length === 0 && (
             <EmptyState
-              icon={<MessageSquare className="w-6 h-6 text-[#2563EB]" />}
-              title="Ask the AI about this complaint"
-              description="Inquire about batch history, defect details, customer narratives, or regulatory risk scores."
+              icon={<Sparkles className="w-6 h-6 text-[#2563EB]" />}
+              title="Ask AI Assistant About This Case"
+              description="Ask questions regarding batch history, defect narrative, FDA recall risk, or customer details."
             />
           )}
 
@@ -150,18 +153,21 @@ export const ComplaintChatPage: React.FC = () => {
             messages.map((msg) => {
               const isUser = msg.sender === 'USER';
               return (
-                <div
+                <motion.div
                   key={msg.id}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
                   className={`flex items-start gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
                 >
                   <Avatar name={isUser ? 'You' : 'AI Assistant'} size="md" />
 
-                  <div className={`max-w-[75%] space-y-1 ${isUser ? 'items-end' : 'items-start'}`}>
+                  <div className={`max-w-[78%] space-y-1 ${isUser ? 'items-end' : 'items-start'}`}>
                     <div
                       className={`p-4 rounded-2xl text-sm leading-relaxed ${
                         isUser
-                          ? 'bg-[#2563EB] text-white rounded-tr-none shadow-sm'
-                          : 'bg-slate-100 text-[#0F172A] border border-[#E2E8F0] rounded-tl-none'
+                          ? 'bg-[#2563EB] text-white rounded-tr-none shadow-sm font-medium'
+                          : 'bg-slate-100/90 text-[#0F172A] border border-[#E2E8F0] rounded-tl-none'
                       }`}
                     >
                       <p className="whitespace-pre-wrap">{msg.message_text}</p>
@@ -180,7 +186,7 @@ export const ComplaintChatPage: React.FC = () => {
                         : 'Just now'}
                     </span>
                   </div>
-                </div>
+                </motion.div>
               );
             })}
 
@@ -190,7 +196,7 @@ export const ComplaintChatPage: React.FC = () => {
               <Avatar name="AI Assistant" size="md" />
               <div className="p-4 rounded-2xl bg-slate-100 border border-[#E2E8F0] text-xs text-[#64748B] flex items-center space-x-2 rounded-tl-none">
                 <Spinner size="sm" className="text-[#2563EB]" />
-                <span>Searching complaint context & generating response...</span>
+                <span>Analyzing document text & generating response...</span>
               </div>
             </div>
           )}
@@ -199,7 +205,7 @@ export const ComplaintChatPage: React.FC = () => {
         </div>
 
         {/* BOTTOM STICKY COMPOSER */}
-        <div className="p-4 bg-slate-50 border-t border-[#E2E8F0]">
+        <div className="p-4 bg-slate-50/80 border-t border-[#E2E8F0]">
           <div className="flex items-center gap-3">
             <input
               type="text"
@@ -207,8 +213,8 @@ export const ComplaintChatPage: React.FC = () => {
               onChange={(e) => setInputQuestion(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={isSending}
-              placeholder="Ask about this complaint..."
-              className="flex-1 bg-white border border-[#E2E8F0] rounded-xl px-4 py-3 text-sm text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 disabled:bg-slate-100 disabled:cursor-not-allowed"
+              placeholder="Ask about batch history, defect details, or regulatory risk..."
+              className="flex-1 bg-white border border-[#E2E8F0] rounded-xl px-4 py-3 text-sm text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 disabled:bg-slate-100 disabled:cursor-not-allowed shadow-xs"
             />
             <Button
               variant="primary"
