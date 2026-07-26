@@ -91,17 +91,29 @@ export const LoginPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen w-full flex bg-[#F8FAFC] font-sans antialiased text-[#0F172A] animate-fadeIn">
+    <div className="relative min-h-screen w-full flex font-sans antialiased text-[#0F172A] animate-fadeIn overflow-hidden">
+      {/* Background Video */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover -z-20"
+      >
+        <source src="/bg-loginpage.mp4" type="video/mp4" />
+      </video>
+      <div className="absolute inset-0 bg-slate-950/20 -z-10" />
+
       {/* LEFT BRAND PANEL (45% Desktop, 40% Tablet, Hidden Mobile) */}
-      <div className="hidden md:flex md:w-[40%] lg:w-[45%] bg-[#2563EB] text-white flex-col justify-between p-10 lg:p-14 select-none">
+      <div className="hidden md:flex md:w-[40%] lg:w-[45%] bg-white/65 backdrop-blur-md text-slate-900 border-r border-white/40 flex-col justify-between p-10 lg:p-14 select-none">
         {/* Brand Header */}
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center">
-            <ShieldCheck className="w-6 h-6 text-white" />
+          <div className="w-10 h-10 rounded-xl bg-slate-900/10 backdrop-blur-sm border border-slate-900/10 flex items-center justify-center">
+            <ShieldCheck className="w-6 h-6 text-blue-600" />
           </div>
           <div>
-            <span className="font-bold text-2xl tracking-tight text-white block leading-none">AIVOA</span>
-            <span className="text-[10px] text-blue-100 font-semibold uppercase tracking-wider block mt-1">
+            <span className="font-bold text-2xl tracking-tight text-slate-900 block leading-none">AIVOA</span>
+            <span className="text-[10px] text-blue-600 font-semibold uppercase tracking-wider block mt-1">
               Pharma Quality AI
             </span>
           </div>
@@ -109,18 +121,18 @@ export const LoginPage: React.FC = () => {
 
         {/* Brand Message */}
         <div className="my-auto py-8">
-          <h1 className="text-3xl lg:text-[36px] font-bold tracking-tight leading-tight text-white max-w-md mb-4">
+          <h1 className="text-3xl lg:text-[36px] font-bold tracking-tight leading-tight text-slate-900 max-w-md mb-4">
             AI-Powered Pharmaceutical Complaint Management
           </h1>
-          <p className="text-blue-100 text-base leading-relaxed mb-8 max-w-sm">
+          <p className="text-slate-700 text-base leading-relaxed mb-8 max-w-sm">
             Streamline complaint processing with AI-assisted extraction, review, and regulatory audit support.
           </p>
 
           {/* Feature List */}
           <ul className="space-y-4">
             {features.map((feature, idx) => (
-              <li key={idx} className="flex items-center space-x-3 text-sm font-medium text-white">
-                <CheckCircle2 className="w-5 h-5 text-blue-200 shrink-0" />
+              <li key={idx} className="flex items-center space-x-3 text-sm font-medium text-slate-800">
+                <CheckCircle2 className="w-5 h-5 text-blue-600 shrink-0" />
                 <span>{feature}</span>
               </li>
             ))}
@@ -128,14 +140,14 @@ export const LoginPage: React.FC = () => {
         </div>
 
         {/* Panel Footer */}
-        <div className="flex items-center justify-between text-xs text-blue-200 border-t border-white/10 pt-4">
+        <div className="flex items-center justify-between text-xs text-slate-600 border-t border-slate-900/10 pt-4">
           <span>Enterprise QA Portal</span>
-          <span className="font-mono bg-white/10 px-2 py-0.5 rounded text-white text-[11px]">v1.0</span>
+          <span className="font-mono bg-slate-900/10 text-slate-900 px-2 py-0.5 rounded text-[11px]">v1.0</span>
         </div>
       </div>
 
       {/* RIGHT LOGIN PANEL (55% Desktop, 60% Tablet, 100% Mobile) */}
-      <div className="flex-1 flex flex-col justify-between p-6 sm:p-10 bg-[#F8FAFC]">
+      <div className="flex-1 flex flex-col justify-between p-6 sm:p-10 bg-slate-900/10">
         <div className="hidden sm:block"></div>
 
         {/* Centered Login Card Container */}
