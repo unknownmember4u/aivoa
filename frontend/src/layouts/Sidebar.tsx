@@ -51,7 +51,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="space-y-6">
         <div className="flex items-center justify-between px-2 pt-1">
           <div className="flex items-center space-x-3 overflow-hidden">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20 shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-[#151717] text-white flex items-center justify-center shadow-md shadow-slate-900/20 shrink-0">
               <ShieldCheck className="w-6 h-6" />
             </div>
             {!isCollapsed && (
@@ -64,7 +64,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <span className="font-bold text-lg text-[#0F172A] tracking-tight block leading-none">
                   AIVOA
                 </span>
-                <span className="text-[10px] text-[#2563EB] font-bold uppercase tracking-wider block mt-1">
+                <span className="text-[10px] text-[#151717] font-bold uppercase tracking-wider block mt-1">
                   Pharma Quality AI
                 </span>
               </motion.div>
@@ -103,7 +103,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           isCollapsed ? 'justify-center px-0' : 'justify-between px-3'
                         } py-2.5 text-sm font-medium rounded-xl transition-all duration-200 ${
                           isActive
-                            ? 'bg-[#2563EB] text-white shadow-md shadow-blue-600/20 font-semibold'
+                            ? 'bg-[#151717] text-white shadow-md shadow-slate-900/20 font-semibold'
                             : 'text-[#64748B] hover:bg-slate-100/80 hover:text-[#0F172A]'
                         }`
                       }
@@ -115,7 +115,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       </div>
 
                       {!isCollapsed && item.badge && (
-                        <span className="text-[10px] font-semibold bg-blue-50 text-[#2563EB] border border-blue-100 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                        <span className="text-[10px] font-semibold bg-slate-100 text-[#151717] border border-slate-200 px-2 py-0.5 rounded-full uppercase tracking-wider">
                           {item.badge}
                         </span>
                       )}
@@ -142,7 +142,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <span className="text-xs font-semibold text-[#0F172A] block truncate">
                   {user?.email ? user.email.split('@')[0] : 'QA Analyst'}
                 </span>
-                <span className="text-[10px] font-semibold text-[#2563EB] uppercase tracking-wider block">
+                <span className="text-[10px] font-bold text-[#151717] uppercase tracking-wider block">
                   {user?.role || 'QA_ANALYST'}
                 </span>
               </div>
