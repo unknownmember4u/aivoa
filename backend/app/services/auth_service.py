@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import create_access_token, verify_password
 from app.models.users import User
-from app.schemas.user import LoginRequest, Token, UserRead
+from app.schemas.user import LoginRequest, UserRead
 
 async def get_user_by_email(db: AsyncSession, email: str) -> Optional[User]:
     """
@@ -52,6 +52,7 @@ async def login(db: AsyncSession, login_data: LoginRequest) -> dict:
     )
 
     return {
-        "token": Token(access_token=access_token, token_type="bearer"),
+        "access_token": access_token,
+        "token_type": "bearer",
         "user": UserRead.model_validate(user),
     }

@@ -26,13 +26,10 @@ def _check_after_extract(state: ComplaintGraphState) -> str:
 def _check_after_validate(state: ComplaintGraphState) -> str:
     """
     Conditional decision node after schema validation:
-    If missing_fields is NOT empty or status is FAILED, terminate early (END).
-    Otherwise proceed to generate_summary.
+    If processing_status is FAILED, terminate early (END).
+    Otherwise ALWAYS proceed to generate_summary -> prepare_form_data.
     """
     if state.get("processing_status") == ProcessingStatus.FAILED:
-        return END
-    missing_fields = state.get("missing_fields", [])
-    if len(missing_fields) > 0:
         return END
     return "generate_summary"
 
@@ -42,7 +39,7 @@ def build_complaint_workflow():
     
     Execution Flow:
     START -> ParseDocumentNode -> ExtractEntitiesNode -> ValidateSchemaNode
-          -> Decision (Missing fields? YES -> END, NO -> GenerateSummaryNode -> PrepareFormDataNode -> END)
+          -> GenerateSummaryNode -> PrepareFormDataNode -> END
     """
     workflow = StateGraph(ComplaintGraphState)
 

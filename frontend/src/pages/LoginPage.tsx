@@ -53,19 +53,17 @@ export const LoginPage: React.FC = () => {
     setApiError(null);
     try {
       const response = await login(data).unwrap();
-      const token = response.access_token;
+      const token = response.access_token || response.token?.access_token;
+
+      if (!token) {
+        throw new Error('No access token returned from server.');
+      }
       
-      // Save token and dispatch to Redux store
+      // Save token and dispatch user profile to Redux store
       dispatch(
         setCredentials({
           token,
-          user: {
-            id: 'user-id',
-            email: data.email,
-            role: 'QA_ANALYST',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
+          user: response.user,
         })
       );
       

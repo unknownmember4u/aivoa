@@ -2,8 +2,13 @@ import { baseApi } from './baseApi';
 import { User } from '@/types';
 
 export interface LoginResponse {
-  access_token: string;
-  token_type: string;
+  access_token?: string;
+  token_type?: string;
+  token?: {
+    access_token: string;
+    token_type: string;
+  };
+  user: User;
 }
 
 export const authApi = baseApi.injectEndpoints({
