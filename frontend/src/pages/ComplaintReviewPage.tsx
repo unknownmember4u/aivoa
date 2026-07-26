@@ -410,44 +410,64 @@ export const ComplaintReviewPage: React.FC = () => {
       },
     ];
 
-    let updatedField: string | null = null;
-    let finalValue: any = null;
+    let updatedFields: string[] = [];
+    let remainingText = userText;
+    
+    // Flatten and sort keywords by length descending to match longest first
+    const allKeywords = fieldDefinitions.flatMap(fd => fd.keywords.map(kw => ({ kw, fieldDef: fd })));
+    allKeywords.sort((a, b) => b.kw.length - a.kw.length);
 
-    for (const fieldDef of fieldDefinitions) {
-      for (const kw of fieldDef.keywords) {
-        if (lower.includes(kw)) {
-          const regex = new RegExp(`${kw}\\s*(?:to|is|=|set to|as)\\s*(.+)`, 'i');
-          const match = userText.match(regex);
-          
-          let rawVal = '';
-          if (match && match[1]) {
-            rawVal = match[1].trim();
-          } else {
-            rawVal = userText
-              .replace(new RegExp(`^(?:change|set|update|fill|make)\\s+`, 'i'), '')
-              .replace(new RegExp(kw, 'i'), '')
-              .replace(/^(?:to|is|=|as)\s*/i, '')
-              .trim();
-          }
+    const usedKeys = new Set<string>();
 
-          if (rawVal) {
-            finalValue = fieldDef.parseVal ? fieldDef.parseVal(rawVal) : rawVal;
-            setValue(fieldDef.key, finalValue);
-            updatedField = fieldDef.fieldName;
-            break;
+    for (const { kw, fieldDef } of allKeywords) {
+      if (usedKeys.has(fieldDef.key)) continue;
+
+      if (remainingText.toLowerCase().includes(kw)) {
+        let regex;
+        if (fieldDef.key === 'complaint_description') {
+          // Description takes the rest of the string
+          regex = new RegExp(`(${kw}\\s*(?:to|is|=|set to|as|:)\\s*(.+))`, 'i');
+        } else {
+          // Other fields capture up to " and " or end of string
+          regex = new RegExp(`(${kw}.*?(?:to|is|=|set to|as|:)\\s*(.+?))(?:\\s+and\\s+|$)`, 'i');
+        }
+        
+        let match = remainingText.match(regex);
+        let rawVal = '';
+        let fullMatchStr = '';
+
+        if (match && match[2]) {
+          fullMatchStr = match[1];
+          rawVal = match[2].trim();
+        } else {
+          // Fallback for direct statements like "batch BAT-123" without "to"
+          const fbRegex = new RegExp(`(${kw}\\s+([^\\s]+))`, 'i');
+          const fbMatch = remainingText.match(fbRegex);
+          if (fbMatch && fbMatch[2] && !['to','is','=','set','and'].includes(fbMatch[2].toLowerCase())) {
+             fullMatchStr = fbMatch[1];
+             rawVal = fbMatch[2];
           }
         }
+
+        if (rawVal) {
+          const finalValue = fieldDef.parseVal ? fieldDef.parseVal(rawVal) : rawVal;
+          setValue(fieldDef.key, finalValue);
+          updatedFields.push(`'${fieldDef.fieldName}' to "${finalValue}"`);
+          usedKeys.add(fieldDef.key);
+          
+          // Remove the matched phrase from remainingText so shorter keywords don't overlap
+          remainingText = remainingText.replace(fullMatchStr, '');
+        }
       }
-      if (updatedField) break;
     }
 
-    if (updatedField && finalValue !== null) {
+    if (updatedFields.length > 0) {
       setChatMessages((prev) => [
         ...prev,
         {
           id: (Date.now() + 1).toString(),
           sender: 'ASSISTANT',
-          text: `Updated '${updatedField}' to "${finalValue}".`,
+          text: `Updated ${updatedFields.join(' and ')}.`,
           isFieldUpdate: true,
         },
       ]);
