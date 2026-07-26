@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search,
@@ -30,21 +30,35 @@ export const ComplaintListPage: React.FC = () => {
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(20);
   const [search, setSearch] = useState<string>('');
+  const [debouncedSearch, setDebouncedSearch] = useState<string>('');
   const [status, setStatus] = useState<string>('ALL');
   const [severity, setSeverity] = useState<string>('ALL');
   const [riskLevel, setRiskLevel] = useState<string>('ALL');
 
-  const { data, isLoading, isError, error, refetch } = useGetComplaintsQuery({
+  // Debounce search input by 300ms to prevent rapid query triggering on every keystroke
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [search]);
+
+  // Query live complaints from PostgreSQL DB
+  const { data, isLoading, isFetching, isError, error, refetch } = useGetComplaintsQuery({
     page,
     page_size: pageSize,
-    search: search.trim() || undefined,
+    search: debouncedSearch.trim() || undefined,
     status: status !== 'ALL' ? status : undefined,
     severity: severity !== 'ALL' ? severity : undefined,
     risk_level: riskLevel !== 'ALL' ? riskLevel : undefined,
   });
 
+  // Only show full skeleton table on initial cold load (when memory cache has no data)
+  const isInitialLoading = isLoading && !data;
+
   const handleResetFilters = () => {
     setSearch('');
+    setDebouncedSearch('');
     setStatus('ALL');
     setSeverity('ALL');
     setRiskLevel('ALL');
@@ -82,7 +96,7 @@ export const ComplaintListPage: React.FC = () => {
       {/* PAGE HEADER */}
       <PageHeader
         title="Complaints Queue"
-        subtitle="Track, filter, and inspect pharmaceutical customer complaint cases."
+        subtitle="Track, filter, and inspect pharmaceutical customer complaint cases from PostgreSQL database."
         actions={
           <Button
             variant="primary"
@@ -97,7 +111,7 @@ export const ComplaintListPage: React.FC = () => {
       {/* ALIGNED FILTER TOOLBAR CARD */}
       <Card className="p-5 border-[#E2E8F0] shadow-sm">
         <div className="flex items-center space-x-2 pb-3 mb-4 border-b border-[#F1F5F9] text-xs font-bold text-[#0F172A] uppercase tracking-wider">
-          <Filter className="w-4 h-4 text-[#2563EB]" />
+          <Filter className="w-4 h-4 text-[#151717]" />
           <span>Filters & Search Toolbar</span>
         </div>
 
@@ -205,13 +219,13 @@ export const ComplaintListPage: React.FC = () => {
         </Card>
       )}
 
-      {/* SKELETON SHIMMER LOADING STATE */}
-      {isLoading && <SkeletonTable rows={6} />}
+      {/* SKELETON SHIMMER LOADING STATE - ONLY ON INITIAL COLD LOAD */}
+      {isInitialLoading && <SkeletonTable rows={6} />}
 
       {/* EMPTY STATE */}
-      {!isLoading && !isError && items.length === 0 && (
+      {!isInitialLoading && !isError && items.length === 0 && (
         <EmptyState
-          icon={<FileText className="w-6 h-6 text-[#2563EB]" />}
+          icon={<FileText className="w-6 h-6 text-[#151717]" />}
           title="No Complaints Match Search"
           description="No customer complaints match your current search and filter criteria."
           action={
@@ -223,8 +237,8 @@ export const ComplaintListPage: React.FC = () => {
       )}
 
       {/* DATA TABLE & MOBILE CARDS */}
-      {!isLoading && !isError && items.length > 0 && (
-        <Card className="overflow-hidden border-[#E2E8F0] shadow-sm">
+      {!isInitialLoading && !isError && items.length > 0 && (
+        <Card className={`overflow-hidden border-[#E2E8F0] shadow-sm transition-opacity duration-200 ${isFetching ? 'opacity-60' : 'opacity-100'}`}>
           {/* DESKTOP TABLE VIEW */}
           <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -247,7 +261,7 @@ export const ComplaintListPage: React.FC = () => {
                     className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
                     onClick={() => navigate(`/complaints/${item.id}`)}
                   >
-                    <td className="py-4 px-6 font-mono font-semibold text-[#2563EB] text-xs">
+                    <td className="py-4 px-6 font-mono font-semibold text-[#151717] text-xs">
                       {item.id.slice(0, 8)}...
                     </td>
                     <td className="py-4 px-6 font-medium max-w-xs truncate text-[#0F172A]">
@@ -266,7 +280,7 @@ export const ComplaintListPage: React.FC = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        leftIcon={<Eye className="w-4 h-4 text-[#64748B] group-hover:text-[#2563EB]" />}
+                        leftIcon={<Eye className="w-4 h-4 text-[#64748B] group-hover:text-[#151717]" />}
                         onClick={() => navigate(`/complaints/${item.id}`)}
                       >
                         View
@@ -287,7 +301,7 @@ export const ComplaintListPage: React.FC = () => {
                 onClick={() => navigate(`/complaints/${item.id}`)}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs font-semibold text-[#2563EB]">
+                  <span className="font-mono text-xs font-semibold text-[#151717]">
                     {item.id.slice(0, 8)}...
                   </span>
                   {getStatusBadge(item.status)}
@@ -331,7 +345,7 @@ export const ComplaintListPage: React.FC = () => {
                   setPageSize(Number(e.target.value));
                   setPage(1);
                 }}
-                className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1 text-xs text-[#0F172A] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
+                className="bg-white border border-[#E2E8F0] rounded-lg px-2.5 py-1 text-xs text-[#0F172A] focus:outline-none focus:ring-1 focus:ring-[#151717]"
               >
                 <option value={10}>10</option>
                 <option value={20}>20</option>
