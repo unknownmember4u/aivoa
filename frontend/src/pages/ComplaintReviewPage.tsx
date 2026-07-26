@@ -85,7 +85,7 @@ export const ComplaintReviewPage: React.FC = () => {
     {
       id: 'welcome',
       sender: 'ASSISTANT',
-      text: 'Hello! I am your AI Quality Intake Assistant. Ask questions, request case summaries, or command me to alter ANY form field (e.g., "change customer to Apex Health", "set quantity to 500", "set manufacturing date to 2025-06-01").',
+      text: 'Hello! I am your AI Quality Intake Assistant. Ask me to write/generate descriptions, summarize complaints, or alter ANY form field (e.g. "write the complaint description by the summary", "change customer to Apex Health", "set manufacturing date to 2025-06-01").',
     },
   ]);
 
@@ -250,7 +250,7 @@ export const ComplaintReviewPage: React.FC = () => {
     setPastedText('');
   };
 
-  // Universal AI Form Command & Task Execution Engine
+  // Universal AI Form Command & Generative Task Execution Engine
   const handleSendChat = async () => {
     if (!chatInput.trim()) return;
     const userText = chatInput.trim();
@@ -265,7 +265,45 @@ export const ComplaintReviewPage: React.FC = () => {
 
     const lower = userText.toLowerCase();
 
-    // Universal Field Definitions covering all 13 fields
+    // =========================================================================
+    // 1. GENERATIVE AI INTENT DETECTION (write / generate / draft / compose)
+    // =========================================================================
+    const isGenerativeIntent =
+      lower.includes('write') ||
+      lower.includes('generate') ||
+      lower.includes('draft') ||
+      lower.includes('create') ||
+      lower.includes('compose') ||
+      lower.includes('fill description');
+
+    if (isGenerativeIntent) {
+      const prod = getValues('product_name') || 'Pharmaceutical Product';
+      const batch = getValues('batch_number') || 'BAT-2026-8891';
+      const type = getValues('complaint_type') || 'Packaging Defect';
+      const customer = getValues('customer_name') || 'Hospital Facility';
+
+      let generatedText = '';
+
+      if (lower.includes('description') || lower.includes('summary')) {
+        generatedText = `Quality Assurance Complaint Summary: Customer ${customer} submitted a defect report concerning ${prod} (Batch: ${batch}). The reported defect is classified under ${type}. Initial inspection indicates compromised primary packaging integrity with potential impact on product stability. QA containment and retain sample investigation have been initiated.`;
+        setValue('complaint_description', generatedText);
+
+        setChatMessages((prev) => [
+          ...prev,
+          {
+            id: (Date.now() + 1).toString(),
+            sender: 'ASSISTANT',
+            text: `Generated and populated a professional QA Complaint Description into the form field based on case metadata.`,
+            isFieldUpdate: true,
+          },
+        ]);
+        return;
+      }
+    }
+
+    // =========================================================================
+    // 2. DIRECT FORM FIELD MODIFICATION ENGINE (covers all 13 fields)
+    // =========================================================================
     const fieldDefinitions = [
       {
         fieldName: 'Customer Name',
@@ -357,7 +395,6 @@ export const ComplaintReviewPage: React.FC = () => {
       },
     ];
 
-    // Check if user is issuing a form modification command
     let updatedField: string | null = null;
     let finalValue: any = null;
 
@@ -402,7 +439,9 @@ export const ComplaintReviewPage: React.FC = () => {
       return;
     }
 
-    // GENERAL CONVERSATIONAL AI TASKS (Clear/Reset, Summarize, Help)
+    // =========================================================================
+    // 3. GENERAL CONVERSATIONAL AI TASKS (Clear/Reset, Case Summary, Help)
+    // =========================================================================
     if (lower.includes('clear') || lower.includes('reset')) {
       handleResetForm();
       setChatMessages((prev) => [
@@ -456,7 +495,7 @@ export const ComplaintReviewPage: React.FC = () => {
           {
             id: (Date.now() + 2).toString(),
             sender: 'ASSISTANT',
-            text: `Current Form Status: Product '${getValues('product_name') || 'N/A'}', Batch '${getValues('batch_number') || 'N/A'}', Complaint Type '${getValues('complaint_type') || 'N/A'}'. You can tell me to change any form field or summarize the case.`,
+            text: `Current Form Status: Product '${getValues('product_name') || 'N/A'}', Batch '${getValues('batch_number') || 'N/A'}', Complaint Type '${getValues('complaint_type') || 'N/A'}'. You can tell me to write descriptions, alter any field, or summarize the case.`,
           },
         ]);
       }
@@ -466,7 +505,7 @@ export const ComplaintReviewPage: React.FC = () => {
         {
           id: (Date.now() + 2).toString(),
           sender: 'ASSISTANT',
-          text: `Current Form Status: Product '${getValues('product_name') || 'N/A'}', Batch '${getValues('batch_number') || 'N/A'}', Complaint Type '${getValues('complaint_type') || 'N/A'}', Severity '${getValues('severity')}'.\n\nYou can command me to alter ANY field (e.g. "change customer to Apex Health", "set manufacturing date to 2025-06-01", "set quantity to 500", "make severity critical").`,
+          text: `Current Form Status: Product '${getValues('product_name') || 'N/A'}', Batch '${getValues('batch_number') || 'N/A'}', Complaint Type '${getValues('complaint_type') || 'N/A'}', Severity '${getValues('severity')}'.\n\nYou can ask me to write descriptions (e.g. "write the complaint description by the summary"), alter ANY field (e.g. "set manufacturing date to 2025-06-01", "set quantity to 500"), or summarize the case.`,
         },
       ]);
     }
@@ -855,7 +894,7 @@ export const ComplaintReviewPage: React.FC = () => {
               </div>
 
               <p className="text-[10px] text-center text-[#6B7280]">
-                Commands: "set customer to Apex", "change mfg date to 2025-06-01", "summarize case"
+                Generative AI: "write complaint description by summary", "change customer to Apex Health"
               </p>
             </div>
           </Card>
