@@ -54,17 +54,6 @@ This repository is organized into:
 
 ---
 
-## 🗂️ Language Composition
-
-```text
-TypeScript : 57.3%
-Python     : 40.3%
-CSS        : 1.2%
-Other      : 1.2%
-```
-
----
-
 ## 🏗️ High-Level Architecture
 
 ```mermaid
@@ -242,20 +231,6 @@ Make sure to:
 
 ---
 
-## 🧭 Workflow Visualization
-
-The repository includes:
-- `workflow_diagram.png` (system/workflow image)
-- `sample complaints/` (example complaint inputs)
-
-You can embed/update additional screenshots like:
-
-```markdown
-![Workflow Diagram](./workflow_diagram.png)
-```
-
----
-
 ## 📈 Why this architecture works
 
 - **Separation of concerns** between UI, API, domain services, and AI logic
@@ -264,23 +239,3 @@ You can embed/update additional screenshots like:
 - **AI graph orchestration** for flexible complaint analysis/routing pipelines
 
 ---
-
-## 🤝 Contributing
-
-1. Fork the repo
-2. Create a feature branch
-3. Commit changes
-4. Open a Pull Request
-
----
-
-## 📄 License
-
-No explicit license file was detected at the repository root.  
-If this is intended for open collaboration, consider adding a `LICENSE` file.
-
----
-
-## ✨ Maintainer
-
-**GitHub:** [@unknownmember4u](https://github.com/unknownmember4u)
