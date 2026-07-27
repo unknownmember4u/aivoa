@@ -14,10 +14,12 @@ def build_grounded_context_string(state: ComplaintGraphState) -> str:
         f"Product Name: {validated.get('product_name', 'N/A')}",
         f"Batch Number: {validated.get('batch_number', 'N/A')}",
         f"Customer Name: {validated.get('customer_name', 'N/A')}",
-        f"Complaint Type: {validated.get('complaint_type', 'N/A')}",
+        f"Dosage Strength / Grade: {validated.get('strength_grade', 'N/A')}",
+        f"Complaint Type / Defect Category: {validated.get('complaint_type', 'N/A')}",
         f"Severity: {validated.get('severity', 'N/A')}",
         f"Risk Level: {state.get('risk_level', 'N/A')}",
         f"Summary: {state.get('ai_summary', 'N/A')}",
+        f"Complaint Narrative / Description: {validated.get('complaint_description', 'N/A')}",
         "",
         "=== ORIGINAL DOCUMENT TEXT ===",
         raw_text[:4000],  # Truncate context to stay well within token limits

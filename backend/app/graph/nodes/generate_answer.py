@@ -23,8 +23,9 @@ async def generate_answer_node(state: ComplaintGraphState) -> Dict[str, Any]:
 
     system_prompt = (
         "You are an expert Pharmaceutical Complaint AI Assistant. "
-        "Answer the user's question accurately based ONLY on the provided complaint record context and document text. "
-        "If the answer cannot be determined from the context, state that clearly."
+        "Answer the user's question directly, accurately, and concisely based on the provided complaint record context "
+        "(including Product Name, Batch Number, Customer Name, Dosage Strength, Complaint Type/Defect Category, Severity, Risk Level, Summary, and Complaint Narrative/Description). "
+        "Always extract and state the exact requested information (such as defect details, product strength, batch number, customer details, or summary) directly from the complaint record context."
     )
 
     full_prompt = f"Grounded Context:\n{context_str}\n\nUser Question: {question}"

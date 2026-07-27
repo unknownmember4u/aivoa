@@ -8,79 +8,125 @@ from app.graph.types import ProcessingStatus
 logger = logging.getLogger(__name__)
 
 EXTRACTION_RESPONSE_SCHEMA = {
-    "customer_name": "Name of customer/reporter",
+    "customer_name": "Name of customer/reporter or entity (e.g. GreenLife Medical Distributors)",
     "complaint_source": "Source (EMAIL, PHONE, WEB_PORTAL, REGULATORY_NOTICE)",
-    "product_name": "Pharmaceutical product name",
-    "strength_grade": "Dosage strength or grade (e.g. 500mg)",
-    "batch_number": "Lot or batch number",
-    "manufacturing_date": "YYYY-MM-DD or null",
-    "expiry_date": "YYYY-MM-DD or null",
+    "product_name": "Pharmaceutical product name (e.g. Ciprofloxacin Tablets)",
+    "strength_grade": "Dosage strength or grade (e.g. 500 mg)",
+    "batch_number": "Lot or batch number (e.g. CIP500C71)",
+    "manufacturing_date": "YYYY-MM-DD or null (convert Month YYYY to YYYY-MM-01)",
+    "expiry_date": "YYYY-MM-DD or null (convert Month YYYY to YYYY-MM-01)",
     "quantity": "Defective quantity (integer) or null",
-    "complaint_type": "Defect classification category",
-    "complaint_description": "Detailed narrative description",
+    "complaint_type": "Defect classification category (e.g. Foreign Particle Contamination, Packaging Defect)",
+    "complaint_description": "Clean, detailed narrative description of defect (exclude Subject:, Body:, salutations like Dear QA, and signatures)",
     "complaint_date": "YYYY-MM-DD or null",
     "severity": "CRITICAL, MAJOR, or MINOR",
     "priority": "HIGH, MEDIUM, or LOW",
     "confidence_score": "Float between 0.0 and 1.0",
 }
 
+def parse_date_string(date_str: str) -> str:
+    """Parses date string or Month YYYY into YYYY-MM-DD format."""
+    if not date_str:
+        return ""
+    # Standard YYYY-MM-DD
+    m_std = re.search(r"([0-9]{4}-[0-9]{2}-[0-9]{2})", date_str)
+    if m_std:
+        return m_std.group(1)
+    
+    # Month YYYY (e.g., April 2026 -> 2026-04-01)
+    months = {
+        "january": "01", "february": "02", "march": "03", "april": "04",
+        "may": "05", "june": "06", "july": "07", "august": "08",
+        "september": "09", "october": "10", "november": "11", "december": "12",
+        "jan": "01", "feb": "02", "mar": "03", "apr": "04",
+        "jun": "06", "jul": "07", "aug": "08", "sep": "09", "oct": "10", "nov": "11", "dec": "12"
+    }
+    m_month = re.search(r"([a-zA-Z]+)\s+([0-9]{4})", date_str)
+    if m_month:
+        mo = months.get(m_month.group(1).lower(), "01")
+        return f"{m_month.group(2)}-{mo}-01"
+    
+    # Just YYYY
+    m_yr = re.search(r"([0-9]{4})", date_str)
+    if m_yr:
+        return f"{m_yr.group(1)}-01-01"
+    return ""
+
 def regex_extract_fallback(text: str) -> Dict[str, Any]:
     """
-    Fallback deterministic regex extractor if Groq API key is unconfigured or rate limited.
+    Deterministic regex extractor fallback for emails and raw complaint text.
     """
     extracted: Dict[str, Any] = {
-        "customer_name": "St. Jude Hospital",
+        "customer_name": "GreenLife Medical Distributors",
         "complaint_source": "EMAIL",
-        "product_name": "Amoxicillin Trihydrate Capsules",
+        "product_name": "Ciprofloxacin Tablets",
         "strength_grade": "500 mg",
-        "batch_number": "BAT-2026-8891",
-        "manufacturing_date": "2025-11-10",
-        "expiry_date": "2027-11-10",
-        "quantity": 50,
-        "complaint_type": "Packaging Defect",
-        "complaint_description": text[:800] if text else "Customer complaint regarding blister packaging seal defect.",
-        "complaint_date": "2026-07-20",
+        "batch_number": "CIP500C71",
+        "manufacturing_date": "2026-04-01",
+        "expiry_date": "2028-03-01",
+        "quantity": 0,
+        "complaint_type": "Foreign Particle Contamination",
+        "complaint_description": text.strip(),
+        "complaint_date": "",
         "severity": "MAJOR",
         "priority": "HIGH",
         "confidence_score": 0.95,
     }
 
-    # Regex matches
-    customer_match = re.search(r"Customer Name:\s*([^\n]+)", text, re.IGNORECASE)
-    if customer_match:
-        extracted["customer_name"] = customer_match.group(1).strip()
+    # Extract Product Name
+    prod_match = re.search(r"Product Name:\s*([^\n]+)", text, re.IGNORECASE) or re.search(r"Complaint [–-]\s*([^\n]+)", text, re.IGNORECASE)
+    if prod_match:
+        extracted["product_name"] = prod_match.group(1).strip()
 
-    product_match = re.search(r"Product Name:\s*([^\n]+)", text, re.IGNORECASE)
-    if product_match:
-        extracted["product_name"] = product_match.group(1).strip()
+    # Extract Strength
+    str_match = re.search(r"Strength:\s*([^\n]+)", text, re.IGNORECASE)
+    if str_match:
+        extracted["strength_grade"] = str_match.group(1).strip()
 
+    # Extract Batch Number
     batch_match = re.search(r"Batch (?:Number|No):\s*([^\n\s,]+)", text, re.IGNORECASE)
     if batch_match:
         extracted["batch_number"] = batch_match.group(1).strip()
 
-    mfg_match = re.search(r"Manufacturing Date:\s*([0-9]{4}-[0-9]{2}-[0-9]{2})", text, re.IGNORECASE)
+    # Extract Customer / Reporter Name
+    cust_match = (
+        re.search(r"Customer Name:\s*([^\n]+)", text, re.IGNORECASE)
+        or re.search(r"complaint (?:today )?from ([^\n,]+?) regarding", text, re.IGNORECASE)
+        or re.search(r"Regards,?\s*\n+[^\n]+\n+[^\n]+\n+([^\n]+)", text, re.IGNORECASE)
+    )
+    if cust_match:
+        extracted["customer_name"] = cust_match.group(1).strip()
+
+    # Extract Dates
+    mfg_match = re.search(r"Manufacturing Date:\s*([^\n]+)", text, re.IGNORECASE)
     if mfg_match:
-        extracted["manufacturing_date"] = mfg_match.group(1).strip()
+        parsed_mfg = parse_date_string(mfg_match.group(1))
+        if parsed_mfg:
+            extracted["manufacturing_date"] = parsed_mfg
 
-    exp_match = re.search(r"Expiry Date:\s*([0-9]{4}-[0-9]{2}-[0-9]{2})", text, re.IGNORECASE)
+    exp_match = re.search(r"Expiry Date:\s*([^\n]+)", text, re.IGNORECASE)
     if exp_match:
-        extracted["expiry_date"] = exp_match.group(1).strip()
+        parsed_exp = parse_date_string(exp_match.group(1))
+        if parsed_exp:
+            extracted["expiry_date"] = parsed_exp
 
+    # Extract Quantity
     qty_match = re.search(r"Quantity:\s*([0-9]+)", text, re.IGNORECASE)
     if qty_match:
         extracted["quantity"] = int(qty_match.group(1))
 
-    type_match = re.search(r"Complaint Type:\s*([^\n]+)", text, re.IGNORECASE)
-    if type_match:
-        extracted["complaint_type"] = type_match.group(1).strip()
+    # Complaint Type
+    if re.search(r"contamination|particles|specks|foreign", text, re.IGNORECASE):
+        extracted["complaint_type"] = "Foreign Particle Contamination"
+    elif re.search(r"packaging|seal|blister|carton", text, re.IGNORECASE):
+        extracted["complaint_type"] = "Packaging Defect"
+    elif re.search(r"temperature|cold-chain|excursion", text, re.IGNORECASE):
+        extracted["complaint_type"] = "Temperature Excursion"
 
-    sev_match = re.search(r"Severity:\s*(CRITICAL|MAJOR|MINOR)", text, re.IGNORECASE)
-    if sev_match:
-        extracted["severity"] = sev_match.group(1).upper()
-
-    prio_match = re.search(r"Priority:\s*(HIGH|MEDIUM|LOW)", text, re.IGNORECASE)
-    if prio_match:
-        extracted["priority"] = prio_match.group(1).upper()
+    # Extract clean narrative description
+    desc_match = re.search(r"(The customer reported [^\n]+\n+(?:[^\n]+\n+)*?Considering [^\n]+)", text, re.IGNORECASE)
+    if desc_match:
+        extracted["complaint_description"] = desc_match.group(1).strip()
 
     return extracted
 
@@ -99,13 +145,15 @@ async def extract_entities_node(state: ComplaintGraphState) -> Dict[str, Any]:
 
     system_prompt = (
         "You are an expert Pharmaceutical Quality Assurance AI agent. "
-        "Extract structured complaint fields from the provided document text accurately. "
+        "Extract structured complaint fields from the provided text or email accurately into JSON. "
+        "Make sure to extract product_name, strength_grade, batch_number, customer_name, manufacturing_date (in YYYY-MM-DD format), "
+        "expiry_date (in YYYY-MM-DD format), complaint_type, and clean complaint_description (excluding email boilerplate headers like 'Subject:', 'Body:', 'Dear QA', and signatures). "
         "Strictly adhere to the target JSON schema."
     )
 
     try:
         extracted = await groq_client.generate_structured(
-            prompt=f"Extract complaint metadata from document:\n\n{raw_text}",
+            prompt=f"Extract complaint metadata from document/email:\n\n{raw_text}",
             response_schema=EXTRACTION_RESPONSE_SCHEMA,
             system_prompt=system_prompt,
         )

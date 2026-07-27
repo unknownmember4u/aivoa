@@ -31,11 +31,11 @@ class GroqClient(BaseAIService):
         if not self.api_key or self.api_key == "your-groq-api-key-here":
             logger.warning("Groq API key is not configured or using default placeholder.")
 
-        # Set max_retries=0 and timeout=3.0s to eliminate 10-12s connection retries
+        # Set timeout=15.0s and max_retries=2 for reliable AI responses
         self._client = AsyncGroq(
             api_key=self.api_key if self.api_key and self.api_key != "your-groq-api-key-here" else "gsk_placeholder_invalid",
-            timeout=3.0,
-            max_retries=0,
+            timeout=15.0,
+            max_retries=2,
         )
 
     async def generate(

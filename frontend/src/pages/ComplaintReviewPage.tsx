@@ -248,21 +248,14 @@ export const ComplaintReviewPage: React.FC = () => {
   };
 
   // Paste Text Extractor
-  const handlePastedTextExtraction = () => {
-    if (!pastedText.trim()) return;
-    setValue('complaint_description', pastedText.trim());
+  const handlePastedTextExtraction = async () => {
+    const raw = pastedText.trim();
+    if (!raw) return;
+
     setIsPasteModalOpen(false);
-
-    setChatMessages((prev) => [
-      ...prev,
-      {
-        id: Date.now().toString(),
-        sender: 'ASSISTANT',
-        text: 'Pasted text added to Complaint Description.',
-      },
-    ]);
-
+    const textFile = new File([raw], 'pasted_email_complaint.txt', { type: 'text/plain' });
     setPastedText('');
+    await handleFileUpload(textFile);
   };
 
   // Universal AI Form Command & Generative Task Execution Engine

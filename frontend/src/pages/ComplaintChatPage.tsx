@@ -31,7 +31,6 @@ export const ComplaintChatPage: React.FC = () => {
   const {
     data: messages = [],
     isLoading: isHistoryLoading,
-    isFetching,
     isError,
     error,
     refetch,
@@ -42,19 +41,6 @@ export const ComplaintChatPage: React.FC = () => {
   const [inputQuestion, setInputQuestion] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
 
-  console.log(
-    `[DEBUG PAGE RENDER] [${new Date().toISOString()}] ComplaintChatPage Render #${renderCountRef.current}`,
-    { complaintId, isHistoryLoading, isFetching, messageCount: messages.length }
-  );
-
-  useEffect(() => {
-    console.log(`[DEBUG PAGE MOUNT] [${new Date().toISOString()}] ComplaintChatPage MOUNTED for ID: ${complaintId}`);
-    return () => {
-      console.log(`[DEBUG PAGE UNMOUNT] [${new Date().toISOString()}] ComplaintChatPage UNMOUNTED for ID: ${complaintId}`);
-    };
-  }, [complaintId]);
-
-  // Auto scroll to bottom when messages update
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isSending]);
@@ -76,7 +62,7 @@ export const ComplaintChatPage: React.FC = () => {
       setLocalError(
         errorObj?.data?.detail || 'Failed to generate AI response. Please try again.'
       );
-      setInputQuestion(question); // Restore text on failure
+      setInputQuestion(question);
     }
   };
 
@@ -86,6 +72,19 @@ export const ComplaintChatPage: React.FC = () => {
       handleSend();
     }
   };
+
+  const sortedMessages = React.useMemo(() => {
+    return [...messages].sort((a, b) => {
+      const timeA = new Date(a.created_at || 0).getTime();
+      const timeB = new Date(b.created_at || 0).getTime();
+      if (timeA !== timeB) {
+        return timeA - timeB;
+      }
+      if (a.sender === 'USER' && b.sender !== 'USER') return -1;
+      if (a.sender !== 'USER' && b.sender === 'USER') return 1;
+      return 0;
+    });
+  }, [messages]);
 
   return (
     <div className="space-y-6 max-w-[960px] mx-auto flex flex-col min-h-[calc(100vh-8.5rem)] pb-8">
@@ -155,7 +154,7 @@ export const ComplaintChatPage: React.FC = () => {
           )}
 
           {/* EMPTY CONVERSATION STATE */}
-          {!isHistoryLoading && !isError && messages.length === 0 && (
+          {!isHistoryLoading && !isError && sortedMessages.length === 0 && (
             <EmptyState
               icon={<Sparkles className="w-6 h-6 text-[#2563EB]" />}
               title="Ask AI Assistant About This Case"
@@ -165,7 +164,7 @@ export const ComplaintChatPage: React.FC = () => {
 
           {/* CHAT MESSAGES LIST */}
           {!isHistoryLoading &&
-            messages.map((msg) => {
+            sortedMessages.map((msg) => {
               const isUser = msg.sender === 'USER';
               return (
                 <motion.div
