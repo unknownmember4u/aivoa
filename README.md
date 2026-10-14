@@ -1,4 +1,4 @@
-# 🧠 AIVOA Task — AI-Powered Pharma Complaint Management System
+# 🧠 AIVOA - AI-Powered Pharma Complaint Management System
 
 <div align="center">
 
@@ -12,14 +12,14 @@
 
 </div>
 
-> **Repository:** [`unknownmember4u/aivoa-task`](https://github.com/unknownmember4u/aivoa-task)  
+> **Repository:** [`unknownmember4u/aivoa`](https://github.com/unknownmember4u/aivoa)  
 > **Description:** *an AI-powered Customer Complaint Management System for the pharmaceutical manufacturing industry.*
 
 ---
 
 ## 📌 Overview
 
-AIVOA Task is a full-stack complaint intelligence platform designed for **pharmaceutical manufacturing workflows**.  
+AIVOA is a full-stack complaint intelligence platform designed for **pharmaceutical manufacturing workflows**.  
 It combines a **FastAPI + AI backend** with a **React + TypeScript frontend** to ingest, classify, route, and manage customer complaints.
 
 This repository is organized into:
@@ -72,7 +72,7 @@ flowchart LR
 ## 📁 Repository Structure
 
 ```text
-aivoa-task/
+aivoa/
 ├── backend/
 │   ├── .env.example
 │   ├── requirements.txt
@@ -159,8 +159,8 @@ SECRET_KEY="your-secure-random-string"
 ## 1) Clone the repository
 
 ```bash
-git clone https://github.com/unknownmember4u/aivoa-task.git
-cd aivoa-task
+git clone https://github.com/unknownmember4u/aivoa.git
+cd aivoa
 ```
 
 ## 2) Backend setup
